@@ -1,0 +1,13 @@
+{
+  "name": "@bolt-sort/level-gen",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "gen": "tsx src/cli.ts",
+    "check": "tsx src/cli.ts check"
+  },
+  "dependencies": {
+    "@bolt-sort/core": "*"
+  }
+}

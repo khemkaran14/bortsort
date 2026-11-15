@@ -1,0 +1,17 @@
+{
+  "appId": "com.divyrs.boltsort",
+  "appName": "Bolt Sort",
+  "webDir": "../../packages/game/dist",
+  "backgroundColor": "#1d2b3a",
+  "android": { "backgroundColor": "#1d2b3a" },
+  "ios": { "backgroundColor": "#1d2b3a", "contentInset": "never" },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "launchAutoHide": false,
+      "backgroundColor": "#1d2b3a",
+      "showSpinner": false
+    },
+    "LocalNotifications": { "iconColor": "#f3c14b" }
+  }
+}

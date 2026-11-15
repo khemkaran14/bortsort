@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "stages": [
+    {
+      "stage": 1,
+      "theme": "Garage Bench",
+      "file": "stage-01.json",
+      "levels": 50,
+      "first": 1
+    },
+    {
+      "stage": 2,
+      "theme": "Bike Shop",
+      "file": "stage-02.json",
+      "levels": 50,
+      "first": 51
+    },
+    {
+      "stage": 3,
+      "theme": "Clock Tower",
+      "file": "stage-03.json",
+      "levels": 50,
+      "first": 101
+    },
+    {
+      "stage": 4,
+      "theme": "Shipyard",
+      "file": "stage-04.json",
+      "levels": 50,
+      "first": 151
+    },
+    {
+      "stage": 5,
+      "theme": "Rail Yard",
+      "file": "stage-05.json",
+      "levels": 50,
+      "first": 201
+    },
+    {
+      "stage": 6,
+      "theme": "Power Plant",
+      "file": "stage-06.json",
+      "levels": 50,
+      "first": 251
+    },
+    {
+      "stage": 7,
+      "theme": "Space Dock",
+      "file": "stage-07.json",
+      "levels": 50,
+      "first": 301
+    },
+    {
+      "stage": 8,
+      "theme": "Robot Factory",
+      "file": "stage-08.json",
+      "levels": 50,
+      "first": 351
+    },
+    {
+      "stage": 9,
+      "theme": "Deep Sea Rig",
+      "file": "stage-09.json",
+      "levels": 50,
+      "first": 401
+    },
+    {
+      "stage": 10,
+      "theme": "Grand Workshop",
+      "file": "stage-10.json",
+      "levels": 50,
+      "first": 451
+    }
+  ]
+}
