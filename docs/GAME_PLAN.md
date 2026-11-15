@@ -104,6 +104,27 @@ progresses, so there is always something new to unlock.
 Blueprint levels are made by scrambling the finished drawing a set number of moves, then solved
 exactly; Zen and Rush puzzles are generated and solved on the device in a few milliseconds.
 
+## Second game: Wit Twist (trick puzzles)
+
+The app opens on a **game chooser**: Bolt Sort or **Wit Twist**. Coins are shared, so either game
+helps the other. ("Wit Twist" is a working title: run the same trademark check as for Bolt Sort.)
+
+Wit Twist is a lateral-thinking puzzle game: each level asks a short question and the obvious answer
+is usually wrong. 50 launch puzzles, written from scratch for this app (a few use old public-domain
+riddles in our own words; no levels, art or characters are taken from any other game).
+
+- **Ways to answer:** tap objects, drag objects, tap or drag words of the question itself, number
+  pad, answer buttons, tap in order, or simply wait.
+- **Examples:** the smallest dot is the full stop in the question; drag “NOT” out of “Do NOT tap the
+  star”; move the hole to the ball; fox-chick-corn river crossing; 3 L / 5 L jugs; lights-out grid.
+- **Help:** 3 free hints, then 25 coins each; skip a puzzle for 60 coins. +10 coins per first solve.
+- **Languages:** every question, hint and explanation in English and Hindi.
+- **Testing:** every level has a scripted solution; `tools/e2e/wit-playthrough.cjs` plays all 50
+  with real touch events in a browser (both languages pass).
+- **Code:** `packages/game/src/wit/` (levels and toolkit), scenes `GameSelect`, `WitMap`, `WitLevel`.
+- **Next:** 25 new puzzles per monthly update; a daily trick puzzle; a "Wit Twist" store listing of
+  its own later if it grows (the code is already separate).
+
 ## Level generation and difficulty tuning
 
 1. **Generator** (`tools/level-gen`, Node.js): stage settings → random candidates from a seed.
@@ -204,6 +225,13 @@ No custom server at launch.
 - [x] Stages 11–12 (levels 501–600)
 - [x] Modes screen; Blueprint mode (60 levels); Rush Hour; Zen Garden
 - [ ] Leaderboard for Rush Hour best score (with Play Games / Game Center)
+
+### Update 2 – Second game: Wit Twist
+
+- [x] Game chooser at launch; shared coins and settings
+- [x] Puzzle toolkit (tap, drag, question words, keypad, choices, sequences, waiting)
+- [x] 50 original puzzles in English and Hindi, all auto-played in a browser test
+- [ ] Hand-play all 50 on a phone and tune hints and difficulty order
 
 ### Phase 6 – Monetization and promotion (after launch)
 

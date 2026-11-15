@@ -112,6 +112,14 @@ const en = {
   'btn.skip': 'Skip',
   'btn.play': 'Play',
   'btn.again': 'Play again',
+  'game.choose': 'Choose a game',
+  'game.bolt.desc': 'Sort the colored nuts. Calm, clever, 600 levels.',
+  'game.wit': 'Wit Twist',
+  'game.wit.desc': 'Sneaky puzzles. The obvious answer is usually wrong!',
+  'game.home': 'Games',
+  'wit.level': 'Puzzle {n}',
+  'wit.correct': 'Brilliant!',
+  'wit.progress': '{n}/{m} solved',
 } as const;
 
 export type TextKey = keyof typeof en;
@@ -229,6 +237,14 @@ const hi: Record<TextKey, string> = {
   'btn.skip': 'छोड़ें',
   'btn.play': 'खेलें',
   'btn.again': 'फिर खेलें',
+  'game.choose': 'एक खेल चुनो',
+  'game.bolt.desc': 'रंगीन नट छाँटो। शांत, चतुर, 600 लेवल।',
+  'game.wit': 'विट ट्विस्ट',
+  'game.wit.desc': 'चालाक पहेलियाँ। सीधा जवाब अक्सर गलत होता है!',
+  'game.home': 'खेल',
+  'wit.level': 'पहेली {n}',
+  'wit.correct': 'शानदार!',
+  'wit.progress': '{n}/{m} हल',
 };
 
 const tables = { en, hi } as const;

@@ -10,7 +10,8 @@ export type AnalyticsEvent =
   | { name: 'streak_day'; day: number }
   | { name: 'tutorial_step'; step: number }
   | { name: 'notification_opened'; type: string }
-  | { name: 'mode_played'; mode: 'blueprint' | 'rush' | 'zen'; won: boolean; score?: number };
+  | { name: 'mode_played'; mode: 'blueprint' | 'rush' | 'zen'; won: boolean; score?: number }
+  | { name: 'wit_solved'; level: number; hinted: boolean };
 
 export interface AnalyticsService {
   log(e: AnalyticsEvent): void;

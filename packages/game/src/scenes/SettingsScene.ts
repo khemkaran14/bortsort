@@ -11,11 +11,14 @@ export class SettingsScene extends Phaser.Scene {
     super('Settings');
   }
 
-  create() {
+  private from = 'Map';
+
+  create(data?: { from?: string }) {
+    if (data?.from) this.from = data.from;
     const { width, height } = this.scale;
     background(this, 1);
-    this.events.on('back', () => this.scene.start('Map'));
-    button(this, 60, 56, 84, 72, '‹', () => this.scene.start('Map'), UI.grey, 40);
+    this.events.on('back', () => this.scene.start(this.from));
+    button(this, 60, 56, 84, 72, '‹', () => this.scene.start(this.from), UI.grey, 40);
     text(this, width / 2, 56, app.t('settings.title'), 40);
     const s = app.data.settings;
     const rows: { key: Toggle | 'notifications'; label: TextKey }[] = [
@@ -76,7 +79,7 @@ export class SettingsScene extends Phaser.Scene {
         confirm(this, app.t('settings.reset'), '?', app.t('settings.reset'), async () => {
           await app.save.reset();
           app.applySettings();
-          this.scene.start('Map');
+          this.scene.start('GameSelect');
         });
       },
       UI.red,

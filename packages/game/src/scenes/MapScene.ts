@@ -218,19 +218,22 @@ export class MapScene extends Phaser.Scene {
     const { width } = this.scale;
     const bar = this.add.graphics().setScrollFactor(0).setDepth(10);
     bar.fillStyle(0x0f1923, 0.92).fillRect(0, 0, width, 120);
-    const coins = coinChip(this, 110, 60);
+    button(this, 46, 60, 72, 72, '⌂', () => this.scene.start('GameSelect'), UI.grey, 34)
+      .setScrollFactor(0)
+      .setDepth(11);
+    const coins = coinChip(this, 172, 60);
     coins.container.setScrollFactor(0).setDepth(11);
     this.coins = coins;
-    text(this, 250, 60, `★ ${app.totalStars()}`, 28, '#f3c14b').setScrollFactor(0).setDepth(11);
+    text(this, 300, 60, `★ ${app.totalStars()}`, 26, '#f3c14b').setScrollFactor(0).setDepth(11);
     const mk = (x: number, label: string, scene: string, color: number) =>
-      button(this, x, 60, 120, 72, label, () => this.scene.start(scene), color, 22)
+      button(this, x, 60, 110, 72, label, () => this.scene.start(scene), color, 21)
         .setScrollFactor(0)
         .setDepth(11);
     const today = todayLocal();
-    const modes = mk(390, app.t('menu.modes'), 'Modes', 0x9b5de5);
+    const modes = mk(412, app.t('menu.modes'), 'Modes', 0x9b5de5);
     if (!app.data.daily[today]) modes.setBadge('!');
-    mk(520, app.t('menu.shop'), 'Shop', UI.green);
-    mk(645, '⚙', 'Settings', UI.grey);
+    mk(532, app.t('menu.shop'), 'Shop', UI.green);
+    mk(650, '⚙', 'Settings', UI.grey);
   }
 
   private openChest(stage: number) {

@@ -31,9 +31,13 @@ export interface SaveData {
   blueprint: { unlocked: number; stars: Record<number, number> };
   rush: { best: number; runs: number };
   zen: { solved: number };
+  /** Wit Twist (second game, since save v3). */
+  wit: { unlocked: number; solved: Record<number, boolean>; freeHints: number; hinted: Record<number, boolean> };
+  /** Game shown first on the chooser. */
+  lastGame: 'bolt' | 'wit';
 }
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 const KEY = 'bolt-sort.save';
 
 export function defaultSave(): SaveData {
@@ -63,6 +67,8 @@ export function defaultSave(): SaveData {
     blueprint: { unlocked: 1, stars: {} },
     rush: { best: 0, runs: 0 },
     zen: { solved: 0 },
+    wit: { unlocked: 1, solved: {}, freeHints: 3, hinted: {} },
+    lastGame: 'bolt',
   };
 }
 
@@ -71,7 +77,7 @@ export function migrate(raw: unknown): SaveData {
   const base = defaultSave();
   if (!raw || typeof raw !== 'object') return base;
   const r = raw as Partial<SaveData>;
-  // v1 → v2 added blueprint / rush / zen; any missing field is filled from the defaults.
+  // v2 added blueprint / rush / zen, v3 added wit / lastGame; missing fields come from the defaults.
   return {
     ...base,
     ...r,
@@ -87,6 +93,7 @@ export function migrate(raw: unknown): SaveData {
     blueprint: { ...base.blueprint, ...(r.blueprint ?? {}) },
     rush: { ...base.rush, ...(r.rush ?? {}) },
     zen: { ...base.zen, ...(r.zen ?? {}) },
+    wit: { ...base.wit, ...(r.wit ?? {}) },
     version: SAVE_VERSION,
   };
 }

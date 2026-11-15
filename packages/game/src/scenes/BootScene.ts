@@ -34,8 +34,7 @@ export class BootScene extends Phaser.Scene {
       else active.events.emit('back');
     }).catch(() => {});
     CapApp.addListener('pause', () => app.audio.stopMusic()).catch(() => {});
-    // First launch: straight into level 1 (first level within seconds, no sign-up).
-    if (!app.data.tutorialDone && app.data.unlocked === 1) this.scene.start('Level', { id: 1 });
-    else this.scene.start('Map');
+    // The app holds two games; the chooser opens first (one tap to play, no sign-up).
+    this.scene.start('GameSelect');
   }
 }

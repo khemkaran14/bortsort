@@ -70,6 +70,7 @@ export const STAGE_LOOKS: Record<number, StageLook> = {
   20: { top: 0x1f4f8f, bottom: 0x0f2a52, accent: 0xffffff, deco: 'grid' }, // blueprint
   21: { top: 0x5a1f2a, bottom: 0x220a10, accent: 0xffd166, deco: 'speed' }, // rush
   22: { top: 0x1f4a44, bottom: 0x0c221f, accent: 0xa8e6cf, deco: 'leaves' }, // zen
+  30: { top: 0x4a2c6e, bottom: 0x1d1033, accent: 0xffd166, deco: 'stars' }, // Wit Twist
 };
 
 export type NutSkin = 'metal' | 'wood' | 'gems' | 'candy' | 'neon';

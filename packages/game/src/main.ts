@@ -7,6 +7,9 @@ import { ShopScene } from './scenes/ShopScene';
 import { SettingsScene } from './scenes/SettingsScene';
 import { ModesScene } from './scenes/ModesScene';
 import { BlueprintScene } from './scenes/BlueprintScene';
+import { GameSelectScene } from './scenes/GameSelectScene';
+import { WitMapScene } from './scenes/WitMapScene';
+import { WitLevelScene } from './scenes/WitLevelScene';
 
 /** Portrait game, 720 wide; height follows the screen's shape so every phone is filled. */
 function gameHeight() {
@@ -26,7 +29,19 @@ const game = new Phaser.Game({
   render: { antialias: true, roundPixels: false },
   fps: { target: 60 },
   input: { activePointers: 2 },
-  scene: [BootScene, MapScene, LevelScene, DailyScene, ShopScene, SettingsScene, ModesScene, BlueprintScene],
+  scene: [
+    BootScene,
+    MapScene,
+    LevelScene,
+    DailyScene,
+    ShopScene,
+    SettingsScene,
+    ModesScene,
+    BlueprintScene,
+    GameSelectScene,
+    WitMapScene,
+    WitLevelScene,
+  ],
 });
 
 document.getElementById('splash')?.remove();

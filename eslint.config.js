@@ -6,6 +6,21 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
+    // Browser test scripts: Node + page code (run with plain node, not bundled).
+    files: ['tools/e2e/**/*.cjs'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        require: 'readonly',
+        process: 'readonly',
+        console: 'readonly',
+        window: 'readonly',
+        localStorage: 'readonly',
+      },
+    },
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
+  },
+  {
     languageOptions: {
       globals: {
         window: 'readonly',
