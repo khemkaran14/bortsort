@@ -1,8 +1,15 @@
 # Bolt Sort
 
 A calm, brain-teasing color-sort puzzle for **Android and iOS**. Move the colored nuts between bolts
-until every bolt holds one color. 500 hand-checked levels in 10 themed stages, 8 special mechanics,
-a Daily Challenge, login streaks, stage chests, boosters and cosmetic skins, and it all works offline.
+until every bolt holds one color. 600 solver-checked levels in 12 themed stages, 10 special pieces and
+mechanics (including the magnet tray and glue bolt), and four extra ways to play:
+
+- **Blueprint**: copy the drawing instead of sorting by color (60 levels)
+- **Rush Hour**: 2-minute timed run with combos and a personal best
+- **Zen Garden**: endless calm puzzles with no counters
+- **Daily Challenge**: the same new puzzle for everyone each day
+
+Plus login streaks, stage chests, boosters and cosmetic skins. It all works offline.
 
 _"Bolt Sort" is a working title. Check the final name and icon for trademark clashes before launch._
 
@@ -10,7 +17,7 @@ _"Bolt Sort" is a working title. Check the final name and icon for trademark cla
 
 ```bash
 npm install
-npm test            # 44 tests: rules, every mechanic, solver, generator, saves, shipped levels
+npm test            # 59 tests: rules, every mechanic, solver, generator, saves, shipped levels
 npm run dev         # play in the browser at http://localhost:5173
 ```
 
@@ -34,7 +41,8 @@ first store upload, because it can't be changed afterwards).
 ```bash
 npm run levels                      # regenerate all 10 stages (~20 min)
 npm run levels -- --stages 1-2      # just some stages
-npm run levels -- check             # re-solve all 500 levels and confirm best move counts
+npm run levels -- blueprint         # rebuild the 60 Blueprint levels
+npm run levels -- check             # re-solve all 660 levels and confirm best move counts
 ```
 
 Each level is generated from a seed, solved with an exact A* search (every shipped level has a proven
