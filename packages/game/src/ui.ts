@@ -156,6 +156,21 @@ export function background(scene: Phaser.Scene, stage: number) {
       case 'bubbles':
         g.strokeCircle(x, y, r / 3);
         break;
+      case 'grid':
+        if (k === 0) {
+          g.lineStyle(1, look.accent, 0.12);
+          for (let gx = 0; gx < width; gx += 40) g.lineBetween(gx, 0, gx, height);
+          for (let gy = 0; gy < height; gy += 40) g.lineBetween(0, gy, width, gy);
+          g.lineStyle(4, look.accent, 0.07);
+        }
+        g.strokeRect(x, y, r, r * 0.6);
+        break;
+      case 'speed':
+        g.lineBetween(x, y, x + r * 2, y);
+        break;
+      case 'leaves':
+        g.fillEllipse(x, y, r * 0.5, r * 0.25);
+        break;
     }
   }
   return g;

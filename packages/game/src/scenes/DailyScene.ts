@@ -13,8 +13,8 @@ export class DailyScene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
     background(this, 0);
-    this.events.on('back', () => this.scene.start('Map'));
-    button(this, 60, 56, 84, 72, '‹', () => this.scene.start('Map'), UI.grey, 40);
+    this.events.on('back', () => this.scene.start('Modes'));
+    button(this, 60, 56, 84, 72, '‹', () => this.scene.start('Modes'), UI.grey, 40);
     text(this, width / 2, 56, app.t('daily.title'), 40);
 
     const today = todayLocal();

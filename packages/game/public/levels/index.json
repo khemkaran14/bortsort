@@ -70,6 +70,23 @@
       "file": "stage-10.json",
       "levels": 50,
       "first": 451
+    },
+    {
+      "stage": 11,
+      "theme": "Magnet Works",
+      "file": "stage-11.json",
+      "levels": 50,
+      "first": 501
+    },
+    {
+      "stage": 12,
+      "theme": "Glue Factory",
+      "file": "stage-12.json",
+      "levels": 50,
+      "first": 551
     }
-  ]
+  ],
+  "modes": {
+    "blueprint": "blueprint.json"
+  }
 }

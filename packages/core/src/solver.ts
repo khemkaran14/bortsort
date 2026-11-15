@@ -39,7 +39,11 @@ export function stateKey(state: GameState, maxThaw = 0): string {
       s += String.fromCharCode(65 + n.c * 2 + (n.h ? 1 : 0));
       if (n.f !== undefined && state.moves < n.f) s += '~' + n.f;
     }
-    if (b.lock === undefined && b.chain === undefined && !chainTargets.has(i)) plain.push(s);
+    if (b.magnet) s += 'M';
+    if (b.glue) s += 'G';
+    const isPlain =
+      !state.goal && b.lock === undefined && b.chain === undefined && !chainTargets.has(i) && !b.magnet && !b.glue;
+    if (isPlain) plain.push(s);
     else special.push(i + ':' + s);
   });
   plain.sort();
@@ -52,6 +56,7 @@ export function stateKey(state: GameState, maxThaw = 0): string {
  * it down. A move involves one color and lowers this count by at most one.
  */
 export function heuristic(state: GameState): number {
+  if (state.goal) return blueprintHeuristic(state);
   const runs: number[] = [];
   const grounded: boolean[] = [];
   for (const b of state.bolts) {
@@ -70,6 +75,25 @@ export function heuristic(state: GameState): number {
     if (!runs[c]) continue;
     h += runs[c] - 1 + (grounded[c] ? 0 : 1);
   }
+  return h;
+}
+
+/**
+ * Blueprint lower bound: above the bottom part of each bolt that already matches its drawing, every
+ * run of same-colored nuts must be moved at least once, and one move clears at most one such run.
+ */
+export function blueprintHeuristic(state: GameState): number {
+  let h = 0;
+  state.bolts.forEach((b, i) => {
+    const want = state.goal![i] ?? [];
+    let k = 0;
+    while (k < b.nuts.length && k < want.length && b.nuts[k].c === want[k]) k++;
+    let prev = -1;
+    for (let j = k; j < b.nuts.length; j++) {
+      if (b.nuts[j].c !== prev) h++;
+      prev = b.nuts[j].c;
+    }
+  });
   return h;
 }
 

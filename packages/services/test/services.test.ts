@@ -8,7 +8,9 @@ describe('save data', () => {
     expect(s.coins).toBe(500);
     expect(s.settings.music).toBe(false);
     expect(s.settings.sfx).toBe(true);
-    expect(s.version).toBe(1);
+    expect(s.version).toBe(2);
+    expect(s.blueprint.unlocked).toBe(1);
+    expect(s.rush.best).toBe(0);
   });
   it('falls back to defaults on garbage', () => {
     expect(migrate('nope')).toEqual(defaultSave());

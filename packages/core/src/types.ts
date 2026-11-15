@@ -20,9 +20,24 @@ export interface Bolt {
   lock?: Color;
   /** Chained bolt: opens once the bolt with this index is completed. */
   chain?: number;
+  /** Magnet bolt: any color may be dropped on top (not only the same color). */
+  magnet?: boolean;
+  /** Glue bolt: nuts can be dropped in but never lifted out again. */
+  glue?: boolean;
 }
 
-export type Mechanic = 'hidden' | 'oneSpare' | 'tall' | 'lock' | 'frozen' | 'short' | 'moveLimit' | 'chain';
+export type Mechanic =
+  | 'hidden'
+  | 'oneSpare'
+  | 'tall'
+  | 'lock'
+  | 'frozen'
+  | 'short'
+  | 'moveLimit'
+  | 'chain'
+  | 'magnet'
+  | 'glue'
+  | 'blueprint';
 
 export type Difficulty = 'normal' | 'hard' | 'superhard';
 export type LevelKind = 'normal' | 'hard' | 'breather' | 'boss' | 'tutorial';
@@ -45,6 +60,11 @@ export interface LevelDef {
   kind: LevelKind;
   score: number;
   mechanics: Mechanic[];
+  /**
+   * Blueprint levels: the target picture. goal[i] lists the colors bolt i must hold (bottom → top).
+   * Without a goal the aim is the usual one color per bolt.
+   */
+  goal?: Color[][];
   /** For tutorial levels: which idea is taught. */
   teaches?: Mechanic | 'basics' | 'undo' | 'hint';
 }
@@ -68,4 +88,6 @@ export interface GameState {
   /** Total nuts of each color in the level. */
   totals: number[];
   moveLimit?: number;
+  /** Blueprint target (see LevelDef.goal). */
+  goal?: Color[][];
 }

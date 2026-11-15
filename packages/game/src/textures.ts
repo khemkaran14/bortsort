@@ -256,6 +256,19 @@ export function makeMiscTextures(scene: Phaser.Scene, boltSkin: BoltSkin) {
     g.fillStyle(0xf3c14b, 1).fillRect(4, 30, 82, 7).fillRect(38, 24, 14, 22);
     g.lineStyle(3, 0x3e2310, 1).strokeRoundedRect(4, 6, 82, 68, 10);
   });
+  make('magnet', 64, 58, (g) => {
+    g.lineStyle(16, 0xd9534f, 1).beginPath();
+    g.arc(32, 26, 20, Math.PI, 0, false);
+    g.strokePath();
+    g.fillStyle(0xd9534f, 1).fillRect(4, 26, 16, 18).fillRect(44, 26, 16, 18);
+    g.fillStyle(0xe0e0e0, 1).fillRect(4, 44, 16, 12).fillRect(44, 44, 16, 12);
+  });
+  make('glue', 80, 40, (g) => {
+    g.fillStyle(0x9ccc65, 0.95).fillRoundedRect(0, 0, 80, 14, 7);
+    g.fillCircle(14, 20, 7).fillCircle(40, 26, 9).fillCircle(64, 18, 6);
+    g.fillRect(10, 8, 8, 12).fillRect(35, 8, 10, 18).fillRect(60, 8, 8, 10);
+    g.fillStyle(0xffffff, 0.5).fillCircle(37, 23, 3);
+  });
   make('ice', 120, 46, (g) => {
     g.fillStyle(0xbfefff, 0.55).fillRoundedRect(0, 0, 120, 44, 9);
     g.lineStyle(3, 0xeafaff, 0.9).strokeRoundedRect(1, 1, 118, 42, 9);

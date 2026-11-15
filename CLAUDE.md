@@ -15,7 +15,8 @@ TypeScript · Phaser 3 · Vite · Capacitor 8 (Android + iOS) · Vitest · ESLin
 - `packages/services` — save data (Capacitor Preferences), audio (Web Audio synth), haptics, analytics,
   notifications, i18n (en + hi), streak, remote config defaults, and **placeholder** `AdsService` /
   `StoreService` (monetization phase).
-- `packages/game` — Phaser scenes: Boot, Map, Level, Daily, Shop, Settings. `public/levels/*.json` are
+- `packages/game` — Phaser scenes: Boot, Map, Level (runs every mode: stage, daily, blueprint, rush,
+  zen), Modes (hub), Blueprint (level picker), Daily, Shop, Settings. `public/levels/*.json` are
   generated; do not hand-edit.
 - `tools/level-gen` — CLI that builds `stage-XX.json` (`npm run levels`), and `check` to re-verify.
 - `apps/mobile` — Capacitor project (`android/`, `ios/`). Web assets come from `packages/game/dist`.
@@ -29,15 +30,21 @@ TypeScript · Phaser 3 · Vite · Capacitor 8 (Android + iOS) · Vitest · ESLin
 5. Win = every bolt empty or complete. No legal move = "No moves left" (Undo / Restart / Extra Bolt).
 6. Mechanics: hidden (`h`), frozen (`f` = thaws after N total moves; can't lift or drop onto it),
    locked bolt (`lock` color: opens when a bolt of that color completes), chained bolt (`chain` = bolt
-   index that must complete), short bolts (`cap` 2–3), move limit (`moveLimit`).
-7. Stars: 3 at ≤ best+2, 2 at ≤ best+5 (under best+6), else 1. Undo unlimited in stages 1–2, then 3 free.
+   index that must complete), short bolts (`cap` 2–3), move limit (`moveLimit`), magnet tray (`magnet`:
+   any color may be dropped on it), glue bolt (`glue`: nuts can be dropped in, never lifted out; starts
+   with one stuck nut whose color must be finished there).
+7. Blueprint levels (`goal`): win when every bolt matches its drawing exactly; any nut may be dropped on
+   any nut where there is room; a bolt matching its drawing is capped.
+8. Stars: 3 at ≤ best+2, 2 at ≤ best+5 (under best+6), else 1. Undo unlimited in stages 1–2, then 3 free.
+9. Modes: Daily (always), Zen (level 8+), Blueprint (level 12+), Rush (level 20+; 120 s, +8 s per solve).
 
 ## Commands
 
 - `npm test` — all unit tests (core rules/solver/generator, services, shipped level files)
 - `npm run typecheck`, `npm run lint`, `npm run format`
 - `npm run dev` — play in the browser (add `?debug` for the test hook `window.__game`)
-- `npm run levels -- --stages 1-2` — regenerate stages; `npm run levels -- check` — verify all
+- `npm run levels -- --stages 1-2` — regenerate stages; `npm run levels -- blueprint` — Blueprint set;
+  `npm run levels -- check` — verify all
 - `npm run android` / `npm run ios` — build, sync and open the native project
 
 ## Conventions
@@ -46,3 +53,4 @@ TypeScript · Phaser 3 · Vite · Capacitor 8 (Android + iOS) · Vitest · ESLin
 - All player text goes through `t()` in `packages/services/src/i18n.ts` (add the key to en and hi).
 - Changing the save format: bump `SAVE_VERSION` and extend `migrate()`.
 - Levels are deterministic from the seed; changing the generator changes levels — regenerate and run `check`.
+  New pieces/options must not consume random numbers for older settings (shipped levels must stay identical).

@@ -61,6 +61,23 @@ export const STAGES: StageSpec[] = [
     introduces: 'basics',
     uses: ['hidden', 'lock', 'frozen', 'short', 'moveLimit', 'chain', 'oneSpare'],
   },
+  // First content update: two new pieces.
+  {
+    stage: 11,
+    theme: 'Magnet Works',
+    colors: [6, 9],
+    cap: [5, 5],
+    introduces: 'magnet',
+    uses: ['tall', 'magnet', 'oneSpare', 'hidden'],
+  },
+  {
+    stage: 12,
+    theme: 'Glue Factory',
+    colors: [6, 9],
+    cap: [5, 5],
+    introduces: 'glue',
+    uses: ['tall', 'glue', 'magnet', 'frozen', 'hidden'],
+  },
 ];
 
 export function stageOfLevel(levelId: number): number {

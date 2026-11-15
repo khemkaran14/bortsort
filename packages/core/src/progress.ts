@@ -66,5 +66,18 @@ export const BOOSTERS = {
 } as const;
 export type BoosterId = keyof typeof BOOSTERS;
 
+/** Player level (highest unlocked) at which each play mode opens. */
+export const MODE_UNLOCK = { daily: 1, zen: 8, blueprint: 12, rush: 20 } as const;
+export type PlayMode = keyof typeof MODE_UNLOCK;
+
+/** Rush mode: 120 seconds, +8 s per puzzle, combo bonus for quick solves. */
+export const RUSH = { seconds: 120, bonusSeconds: 8, comboWindow: 20 } as const;
+
+export function rushPoints(best: number, moves: number, combo: number): number {
+  const base = 100 + best * 10;
+  const efficiency = moves <= best + 2 ? 50 : 0;
+  return Math.round((base + efficiency) * (1 + Math.min(combo, 5) * 0.2));
+}
+
 /** Stage chest opens at 120 of the stage's 150 stars. */
 export const CHEST_STARS = 120;

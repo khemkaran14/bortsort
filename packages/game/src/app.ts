@@ -17,6 +17,7 @@ import {
 interface StageIndex {
   version: number;
   stages: { stage: number; theme: string; file: string; levels: number; first: number }[];
+  modes?: { blueprint?: string };
 }
 
 /** Shared services and data for every scene. */
@@ -31,6 +32,7 @@ class AppContext {
   notifications = new NotificationService();
   index: StageIndex = { version: 1, stages: [] };
   private stages = new Map<number, StageFile>();
+  private blueprints: StageFile | null = null;
   levelsWonThisSession = 0;
 
   get data() {
@@ -77,6 +79,20 @@ class AppContext {
     if (!meta) return null;
     const file = await this.stage(meta.stage);
     return file.levels.find((l) => l.id === id) ?? null;
+  }
+
+  /** Blueprint mode levels (1-based). */
+  async blueprintLevel(n: number): Promise<LevelDef | null> {
+    if (!this.blueprints) {
+      const file = this.index.modes?.blueprint;
+      if (!file) return null;
+      this.blueprints = (await (await fetch('levels/' + file)).json()) as StageFile;
+    }
+    return this.blueprints.levels.find((l) => l.id === n) ?? null;
+  }
+
+  get blueprintCount() {
+    return this.index.modes?.blueprint ? 60 : 0;
   }
 
   starsInStage(stage: number): number {

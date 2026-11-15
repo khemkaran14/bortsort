@@ -227,8 +227,8 @@ export class MapScene extends Phaser.Scene {
         .setScrollFactor(0)
         .setDepth(11);
     const today = todayLocal();
-    const daily = mk(390, app.t('menu.daily'), 'Daily', 0x9b5de5);
-    if (!app.data.daily[today]) daily.setBadge('!');
+    const modes = mk(390, app.t('menu.modes'), 'Modes', 0x9b5de5);
+    if (!app.data.daily[today]) modes.setBadge('!');
     mk(520, app.t('menu.shop'), 'Shop', UI.green);
     mk(645, '⚙', 'Settings', UI.grey);
   }

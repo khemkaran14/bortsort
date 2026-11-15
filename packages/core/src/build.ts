@@ -1,8 +1,15 @@
 import { analyzeLevel, difficultyScore, labelFor, type LevelStats } from './analyze';
-import { generateLayout, mechanicsOf, type GenConfig } from './generator';
+import {
+  generateBlueprint,
+  generateLayout,
+  mechanicsOf,
+  type BlueprintConfig,
+  type BlueprintPattern,
+  type GenConfig,
+} from './generator';
 import { moveLimitFor, starThresholds } from './progress';
 import { hashString, Rng } from './rng';
-import { stateKey } from './solver';
+import { solve, stateKey } from './solver';
 import { createState } from './rules';
 import { LEVELS_PER_STAGE, STAGES, type StageSpec } from './stages';
 import type { Bolt, LevelDef, LevelKind, StageFile } from './types';
@@ -13,6 +20,7 @@ export interface Candidate {
   bolts: Bolt[];
   stats: LevelStats;
   score: number;
+  goal?: number[][];
 }
 
 export interface BuildOptions {
@@ -65,6 +73,11 @@ export function configFor(spec: StageSpec, index: number, rng: Rng): GenConfig {
   if (want('short', 0.7)) cfg.short = index === 0 ? 1 : rng.int(1, 2);
   if (want('chain', 0.7)) cfg.chain = true;
   if (want('moveLimit', kind === 'boss' ? 1 : 0.5)) cfg.moveLimit = true;
+  if (want('magnet', 0.8)) {
+    cfg.magnet = true;
+    if (spec.introduces === 'magnet' && index > 0 && kind !== 'breather') cfg.spare = 1;
+  }
+  if (want('glue', 0.8)) cfg.glue = true;
   if (spec.stage === 10 && index > 0) {
     // Finale: mix two random mechanics into most levels.
     const pool = ['hidden', 'lock', 'frozen', 'short', 'chain', 'moveLimit'] as const;
@@ -206,4 +219,118 @@ export function dailyLevel(date: string): LevelDef {
     }
   }
   throw new Error('No daily level');
+}
+
+// ---------------------------------------------------------------------------------------------
+// Blueprint mode: copy the drawing.
+
+export const BLUEPRINT_LEVELS = 60;
+
+/** Settings for Blueprint level n (0-based): more colors, longer scrambles and new patterns as it goes. */
+export function blueprintConfigFor(index: number, rng: Rng): BlueprintConfig & { scramble: number } {
+  const colors = Math.min(5, 3 + Math.floor(index / 20));
+  const cap = index < 6 ? 2 : 4;
+  const patterns: BlueprintPattern[] = ['halves', 'steps', 'sandwich'];
+  const pattern = index < 12 ? 'halves' : rng.pick(patterns);
+  const slot = (index % 10) + 1;
+  let scramble = 6 + Math.floor(index / 3);
+  if (slot === 8) scramble += 3;
+  if (slot === 10) scramble += 5;
+  if (slot === 9) scramble = Math.max(4, scramble - 3);
+  return { colors, cap, spare: 2, pattern, scramble: Math.min(scramble, 30) };
+}
+
+export function findBlueprint(
+  cfg: BlueprintConfig & { scramble: number },
+  seed0: number,
+  opts: BuildOptions = {},
+): Candidate | null {
+  for (let a = 0; a < (opts.attempts ?? 40); a++) {
+    const seed = (seed0 + a * 7919) >>> 0;
+    const made = generateBlueprint(cfg, seed);
+    if (!made) continue;
+    const stats = analyzeLevel(
+      made.bolts,
+      { exactNodes: opts.exactNodes ?? 60_000, fallbackNodes: opts.fallbackNodes ?? 60_000, seed, playouts: 30 },
+      made.goal,
+    );
+    if (stats.solvable !== true || stats.best < 3) continue;
+    const gen: GenConfig = { colors: cfg.colors, cap: cfg.cap, spare: cfg.spare };
+    const score = difficultyScore(stats, ['blueprint']);
+    return { seed, cfg: gen, bolts: made.bolts, stats, score, goal: made.goal };
+  }
+  return null;
+}
+
+/** Build the Blueprint level set (ids 1..60), easiest first with a gentle sawtooth. */
+export function buildBlueprints(seed: number, opts: BuildOptions = {}): StageFile {
+  const levels: LevelDef[] = [];
+  for (let index = 0; index < BLUEPRINT_LEVELS; index++) {
+    const rng = new Rng(hashString(`blueprint:${index}:${seed}`));
+    const cfg = blueprintConfigFor(index, rng);
+    const pool: Candidate[] = [];
+    for (let k = 0; k < 8 && pool.length < 3; k++) {
+      const c = findBlueprint(cfg, rng.int(1, 2 ** 31 - 1), opts);
+      if (c) pool.push(c);
+    }
+    if (pool.length === 0) throw new Error(`Blueprint ${index + 1}: no solvable candidate`);
+    pool.sort((a, b) => a.score - b.score);
+    const slot = (index % 10) + 1;
+    const chosen = index === 0 ? pool[0] : pool[Math.round(slotTarget(slot) * (pool.length - 1))];
+    const lvl = toLevel(chosen, index + 1, 0, index === 0 ? 'tutorial' : kindOfSlot(slot, index));
+    lvl.goal = chosen.goal;
+    lvl.mechanics = ['blueprint'];
+    if (index === 0) lvl.teaches = 'blueprint';
+    lvl.difficulty = slot === 10 ? 'superhard' : slot === 8 ? 'hard' : 'normal';
+    levels.push(lvl);
+    opts.onProgress?.(`blueprint ${index + 1}: ${cfg.pattern} best ${lvl.best}`);
+  }
+  return { stage: 0, theme: 'Blueprint', version: 1, levels };
+}
+
+// ---------------------------------------------------------------------------------------------
+// Quick levels made on the phone for Zen and Rush modes.
+
+/** Make a small solvable level fast (no difficulty analysis). Same seed → same level. */
+export function quickLevel(cfg: GenConfig, seed: number): LevelDef {
+  const rng = new Rng(seed);
+  for (let a = 0; a < 60; a++) {
+    const s = rng.int(1, 2 ** 31 - 1);
+    const bolts = generateLayout(cfg, s);
+    if (!bolts) continue;
+    const r = solve(createState({ bolts }), { exactNodes: 15_000, fallbackNodes: 20_000 });
+    if (r.solvable !== true || r.path.length < Math.min(4, cfg.colors + 1)) continue;
+    const best = r.path.length;
+    return {
+      id: 0,
+      stage: 0,
+      seed: s,
+      bolts,
+      best,
+      bestExact: r.exact,
+      stars: starThresholds(best),
+      difficulty: 'normal',
+      kind: 'normal',
+      score: 0,
+      mechanics: mechanicsOf(cfg),
+    };
+  }
+  // Fallback that is always solvable: two colors, two spares.
+  return quickLevel({ colors: 3, cap: 4, spare: 2 }, seed + 1);
+}
+
+/** Rush: small puzzles that grow a little as the run goes on. */
+export function rushConfig(solved: number): GenConfig {
+  return { colors: Math.min(5, 3 + Math.floor(solved / 3)), cap: solved < 2 ? 3 : 4, spare: 2 };
+}
+
+/** Zen: relaxed, varied puzzles; sometimes with a magnet tray or hidden nuts for variety. */
+export function zenConfig(n: number, rng: Rng): GenConfig {
+  const cfg: GenConfig = { colors: rng.int(4, 7), cap: rng.pick([4, 4, 5]), spare: 2 };
+  if (n > 2) {
+    const roll = rng.next();
+    if (roll < 0.2) cfg.magnet = true;
+    else if (roll < 0.36) cfg.hidden = 0.5;
+  }
+  return cfg;
 }

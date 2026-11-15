@@ -9,6 +9,8 @@ function cloneBolt(b: Bolt): Bolt {
   const nb: Bolt = { cap: b.cap, nuts: b.nuts.map((n) => ({ ...n })) };
   if (b.lock !== undefined) nb.lock = b.lock;
   if (b.chain !== undefined) nb.chain = b.chain;
+  if (b.magnet) nb.magnet = true;
+  if (b.glue) nb.glue = true;
   return nb;
 }
 
@@ -20,12 +22,30 @@ export function countColors(bolts: Bolt[]): number[] {
 }
 
 /** Build the starting state of a level. The top nut of every bolt is always visible. */
-export function createState(level: Pick<LevelDef, 'bolts' | 'moveLimit'>): GameState {
+export function createState(level: Pick<LevelDef, 'bolts' | 'moveLimit' | 'goal'>): GameState {
   const bolts = level.bolts.map(cloneBolt);
   for (const b of bolts) revealTop(b);
   const state: GameState = { bolts, moves: 0, totals: countColors(bolts) };
   if (level.moveLimit) state.moveLimit = level.moveLimit;
+  if (level.goal) state.goal = level.goal;
   return state;
+}
+
+/** Copy a state's fixed settings (totals, move limit, blueprint) onto new bolts and move count. */
+function derive(state: GameState, bolts: Bolt[], moves: number): GameState {
+  const next: GameState = { bolts, moves, totals: state.totals };
+  if (state.moveLimit) next.moveLimit = state.moveLimit;
+  if (state.goal) next.goal = state.goal;
+  return next;
+}
+
+/** Blueprint: does bolt i hold exactly the colors its drawing asks for? */
+export function matchesGoal(state: GameState, i: number): boolean {
+  const want = state.goal?.[i] ?? [];
+  const nuts = state.bolts[i].nuts;
+  if (nuts.length !== want.length) return false;
+  for (let k = 0; k < nuts.length; k++) if (nuts[k].c !== want[k]) return false;
+  return true;
 }
 
 function revealTop(b: Bolt): void {
@@ -41,6 +61,8 @@ export function isFrozen(nut: Nut | undefined, moves: number): boolean {
 export function isComplete(state: GameState, i: number): boolean {
   const b = state.bolts[i];
   if (b.nuts.length === 0) return false;
+  // Blueprint levels: a bolt is done when it matches its drawing.
+  if (state.goal) return matchesGoal(state, i);
   const c = b.nuts[0].c;
   if (b.nuts.length !== state.totals[c]) return false;
   for (const n of b.nuts) if (n.c !== c) return false;
@@ -70,6 +92,7 @@ export function isOpen(state: GameState, i: number): boolean {
  */
 export function liftGroup(state: GameState, i: number): { color: number; count: number } | null {
   const b = state.bolts[i];
+  if (b.glue) return null; // glue: nuts stick for good
   if (b.nuts.length === 0 || !isOpen(state, i) || isComplete(state, i)) return null;
   const top = b.nuts[b.nuts.length - 1];
   if (isFrozen(top, state.moves)) return null;
@@ -93,7 +116,8 @@ export function dropCount(state: GameState, from: number, to: number): number {
   if (space <= 0) return 0;
   const top = t.nuts[t.nuts.length - 1];
   if (top) {
-    if (top.c !== g.color) return 0;
+    // Same color only, except on a magnet bolt and in Blueprint levels (any nut, wherever it fits).
+    if (top.c !== g.color && !t.magnet && !state.goal) return 0;
     if (isFrozen(top, state.moves)) return 0;
   }
   return Math.min(g.count, space);
@@ -116,8 +140,7 @@ export function applyMove(state: GameState, from: number, to: number): GameState
   revealTop(src);
   bolts[from] = src;
   bolts[to] = dst;
-  const next: GameState = { bolts, moves: state.moves + 1, totals: state.totals };
-  if (state.moveLimit) next.moveLimit = state.moveLimit;
+  const next = derive(state, bolts, state.moves + 1);
   // A completed bolt shows all its nuts.
   for (const i of [to]) {
     if (isComplete(next, i)) for (const nut of next.bolts[i].nuts) delete nut.h;
@@ -137,6 +160,10 @@ export function legalMoves(state: GameState): Move[] {
 }
 
 export function isWon(state: GameState): boolean {
+  if (state.goal) {
+    for (let i = 0; i < state.bolts.length; i++) if (!matchesGoal(state, i)) return false;
+    return true;
+  }
   for (let i = 0; i < state.bolts.length; i++) {
     if (state.bolts[i].nuts.length > 0 && !isComplete(state, i)) return false;
   }
@@ -164,12 +191,8 @@ export function status(state: GameState): Status {
 /** Extra Bolt booster: add one empty, open bolt with the level's largest capacity. */
 export function addExtraBolt(state: GameState): GameState {
   const cap = Math.max(...state.bolts.map((b) => b.cap));
-  const next: GameState = {
-    bolts: [...state.bolts, { cap, nuts: [] }],
-    moves: state.moves,
-    totals: state.totals,
-  };
-  if (state.moveLimit) next.moveLimit = state.moveLimit;
+  const next = derive(state, [...state.bolts, { cap, nuts: [] }], state.moves);
+  if (state.goal) next.goal = [...state.goal, []];
   return next;
 }
 
@@ -180,7 +203,9 @@ export function addExtraBolt(state: GameState): GameState {
 export function isPointlessMove(state: GameState, m: Move): boolean {
   const src = state.bolts[m.from];
   const dst = state.bolts[m.to];
+  if (state.goal) return false; // in Blueprint every bolt position matters
   if (dst.nuts.length !== 0 || dst.cap !== src.cap) return false;
+  if (src.magnet || dst.magnet || src.glue || dst.glue) return false;
   if (src.lock !== undefined || src.chain !== undefined) return false;
   if (dst.lock !== undefined || dst.chain !== undefined) return false;
   for (const b of state.bolts) if (b.chain === m.from || b.chain === m.to) return false;

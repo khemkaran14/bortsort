@@ -46,6 +46,8 @@ A good level makes the player plan 3–5 moves ahead, because empty bolts are sc
 | 8     | Robot Factory  | 351–400 | 7–10   | 6        | Move limit levels                                        |
 | 9     | Deep Sea Rig   | 401–450 | 8–10   | 6        | Chained bolts (blocked until a linked bolt is completed) |
 | 10    | Grand Workshop | 451–500 | 8–12   | 4–6      | Mixed mechanics finale                                   |
+| 11    | Magnet Works   | 501–550 | 6–9    | 5        | Magnet tray (any color sticks on it) — update 1          |
+| 12    | Glue Factory   | 551–600 | 6–9    | 5        | Glue bolt (nuts stick for good) — update 1               |
 
 - **Sawtooth inside each stage:** blocks of 10. Levels 1–7 build up, 8 is Hard, 9 is a breather, 10 is a Boss with a bigger reward.
 - **Labels:** Normal, Hard and Super Hard, with a colored badge.
@@ -66,6 +68,9 @@ Each mechanic is introduced with a tutorial level (the first level of its stage)
 | Move limit        | Finish within solver's best + a margin                             | Efficient thinking; replay value     |
 | Chained bolt      | Usable once a linked bolt is completed                             | A dependency to plan around          |
 
+| Magnet tray | Small red bolt where any color can be dropped on any other; only the top run lifts off | A free-form parking stack: what you bury, you must dig out later |
+| Glue bolt | Starts with one stuck nut; nuts dropped in can never be lifted out | Commitment: every drop there is final, so that color must be gathered first |
+
 After launch: at most one new mechanic per monthly update, tested in 20+ levels first.
 
 ## Engagement systems
@@ -83,6 +88,21 @@ After launch: at most one new mechanic per monthly update, tested in 20+ levels 
 11. **Zen mode** (later): endless random levels, no stars or move counts.
 
 Notifications: at most one per day (daily challenge, streak at risk, new event), each type can be switched off.
+
+## Play modes (what makes Bolt Sort different)
+
+Besides the stage map, a **Modes** screen offers four other ways to play. Each opens as the player
+progresses, so there is always something new to unlock.
+
+| Mode            | Opens at | How it plays                                                                                                                                                                          |
+| --------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Daily Challenge | start    | One level per day, the same for everyone; calendar and monthly trophy.                                                                                                                |
+| Zen Garden      | level 8  | Endless calm puzzles made on the phone; no move counter, no timer, free hints, +3 coins each.                                                                                         |
+| Blueprint       | level 12 | 60 levels where you **copy a drawing** (stripes, steps, sandwiches) instead of sorting by color. Any nut may be dropped on any nut, so it is a rearranging puzzle, not a sorting one. |
+| Rush Hour       | level 20 | 120 seconds of small puzzles; +8 s per solve, combo bonus for quick solves, efficiency bonus, personal best. Skip costs 5 s.                                                          |
+
+Blueprint levels are made by scrambling the finished drawing a set number of moves, then solved
+exactly; Zen and Rush puzzles are generated and solved on the device in a few milliseconds.
 
 ## Level generation and difficulty tuning
 
@@ -177,6 +197,13 @@ No custom server at launch.
 
 - [ ] Store listings, screenshots and preview video
 - [ ] Submit to both stores; India first, worldwide a week later
+
+### Update 1 – More ways to play
+
+- [x] Magnet tray and glue bolt pieces (rules, solver, generator, tests)
+- [x] Stages 11–12 (levels 501–600)
+- [x] Modes screen; Blueprint mode (60 levels); Rush Hour; Zen Garden
+- [ ] Leaderboard for Rush Hour best score (with Play Games / Game Center)
 
 ### Phase 6 – Monetization and promotion (after launch)
 

@@ -27,9 +27,13 @@ export interface SaveData {
     notifications: { daily: boolean; streak: boolean; events: boolean };
   };
   stats: { levelsWon: number; threeStars: number; bossNoUndo: number; sessions: number };
+  /** Blueprint mode progress (since save v2). */
+  blueprint: { unlocked: number; stars: Record<number, number> };
+  rush: { best: number; runs: number };
+  zen: { solved: number };
 }
 
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 const KEY = 'bolt-sort.save';
 
 export function defaultSave(): SaveData {
@@ -56,6 +60,9 @@ export function defaultSave(): SaveData {
       notifications: { daily: true, streak: true, events: true },
     },
     stats: { levelsWon: 0, threeStars: 0, bossNoUndo: 0, sessions: 0 },
+    blueprint: { unlocked: 1, stars: {} },
+    rush: { best: 0, runs: 0 },
+    zen: { solved: 0 },
   };
 }
 
@@ -64,7 +71,7 @@ export function migrate(raw: unknown): SaveData {
   const base = defaultSave();
   if (!raw || typeof raw !== 'object') return base;
   const r = raw as Partial<SaveData>;
-  // v1 is the first format: fill any missing fields from the defaults.
+  // v1 → v2 added blueprint / rush / zen; any missing field is filled from the defaults.
   return {
     ...base,
     ...r,
@@ -77,6 +84,9 @@ export function migrate(raw: unknown): SaveData {
       notifications: { ...base.settings.notifications, ...(r.settings?.notifications ?? {}) },
     },
     stats: { ...base.stats, ...(r.stats ?? {}) },
+    blueprint: { ...base.blueprint, ...(r.blueprint ?? {}) },
+    rush: { ...base.rush, ...(r.rush ?? {}) },
+    zen: { ...base.zen, ...(r.zen ?? {}) },
     version: SAVE_VERSION,
   };
 }

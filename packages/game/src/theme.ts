@@ -37,7 +37,20 @@ export interface StageLook {
   top: number;
   bottom: number;
   accent: number;
-  deco: 'gears' | 'spokes' | 'clock' | 'waves' | 'rails' | 'bolts' | 'stars' | 'circuits' | 'bubbles' | 'mix';
+  deco:
+    | 'gears'
+    | 'spokes'
+    | 'clock'
+    | 'waves'
+    | 'rails'
+    | 'bolts'
+    | 'stars'
+    | 'circuits'
+    | 'bubbles'
+    | 'mix'
+    | 'grid'
+    | 'speed'
+    | 'leaves';
 }
 
 export const STAGE_LOOKS: Record<number, StageLook> = {
@@ -51,7 +64,12 @@ export const STAGE_LOOKS: Record<number, StageLook> = {
   8: { top: 0x3c3f46, bottom: 0x1c1d21, accent: 0x5ee0ff, deco: 'circuits' },
   9: { top: 0x0d3b4f, bottom: 0x041722, accent: 0x5ff0c8, deco: 'bubbles' },
   10: { top: 0x4b2e1f, bottom: 0x22140c, accent: 0xffd166, deco: 'mix' },
+  11: { top: 0x4a2330, bottom: 0x220e15, accent: 0xff8a80, deco: 'bolts' },
+  12: { top: 0x2f4a1e, bottom: 0x15230b, accent: 0xb5e655, deco: 'bubbles' },
   0: { top: 0x2c3e66, bottom: 0x141d33, accent: 0xffd166, deco: 'stars' }, // daily
+  20: { top: 0x1f4f8f, bottom: 0x0f2a52, accent: 0xffffff, deco: 'grid' }, // blueprint
+  21: { top: 0x5a1f2a, bottom: 0x220a10, accent: 0xffd166, deco: 'speed' }, // rush
+  22: { top: 0x1f4a44, bottom: 0x0c221f, accent: 0xa8e6cf, deco: 'leaves' }, // zen
 };
 
 export type NutSkin = 'metal' | 'wood' | 'gems' | 'candy' | 'neon';

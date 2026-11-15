@@ -22,8 +22,8 @@ export interface AnalyzeOptions extends SolveOptions {
 }
 
 /** Solve a level and measure how much planning it needs. */
-export function analyzeLevel(bolts: Bolt[], opts: AnalyzeOptions = {}): LevelStats {
-  const start = createState({ bolts });
+export function analyzeLevel(bolts: Bolt[], opts: AnalyzeOptions = {}, goal?: number[][]): LevelStats {
+  const start = createState({ bolts, goal });
   const spare = bolts.filter((b) => b.nuts.length === 0).length;
   const r = solve(start, opts);
   const stats: LevelStats = {

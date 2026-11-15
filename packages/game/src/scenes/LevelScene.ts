@@ -13,7 +13,13 @@ import {
   isFrozen,
   isOpen,
   liftGroup,
+  quickLevel,
+  RUSH,
+  rushConfig,
+  rushPoints,
+  Rng,
   status,
+  zenConfig,
   starsFor,
   type GameState,
   type LevelDef,
@@ -27,7 +33,16 @@ import { background, button, coinChip, confirm, dim, panel, text, toast, type Bu
 interface LevelData {
   id?: number;
   daily?: string;
+  /** Blueprint level number (1-based). */
+  blueprint?: number;
+  rush?: boolean;
+  zen?: boolean;
 }
+
+type Mode = 'stage' | 'daily' | 'blueprint' | 'rush' | 'zen';
+
+/** Background looks for the modes (see STAGE_LOOKS). */
+const MODE_LOOK: Record<Mode, number> = { stage: 1, daily: 0, blueprint: 20, rush: 21, zen: 22 };
 
 interface BoltLayout {
   x: number;
@@ -58,8 +73,8 @@ export class LevelScene extends Phaser.Scene {
   private nutSprites: Phaser.GameObjects.Container[][] = [];
   private movesText!: Phaser.GameObjects.Text;
   private undoBtn!: Button;
-  private hintBtn!: Button;
-  private boltBtn!: Button;
+  private hintBtn: Button | null = null;
+  private boltBtn: Button | null = null;
   private revealBtn: Button | null = null;
   private coins!: ReturnType<typeof coinChip>;
   private undosUsed = 0;
@@ -72,6 +87,19 @@ export class LevelScene extends Phaser.Scene {
   private tutorialHand: Phaser.GameObjects.Image | null = null;
   private banner: Phaser.GameObjects.Container | null = null;
   private chainTags = new Map<number, string>();
+  private mode: Mode = 'stage';
+  private modeIndex = 0;
+  private bestText: Phaser.GameObjects.Text | null = null;
+  private skipBtn: Button | null = null;
+  // Rush
+  private rushEnd = 0;
+  private rushScore = 0;
+  private rushSolved = 0;
+  private rushCombo = 0;
+  private lastSolveAt = 0;
+  private rushOverShown = false;
+  private paused = false;
+  private timerText: Phaser.GameObjects.Text | null = null;
 
   constructor() {
     super('Level');
@@ -79,6 +107,19 @@ export class LevelScene extends Phaser.Scene {
 
   init(data: LevelData) {
     this.daily = data.daily ?? null;
+    this.mode = data.daily ? 'daily' : data.blueprint ? 'blueprint' : data.rush ? 'rush' : data.zen ? 'zen' : 'stage';
+    this.modeIndex = data.blueprint ?? 0;
+    this.rushScore = 0;
+    this.rushSolved = 0;
+    this.rushCombo = 0;
+    this.rushOverShown = false;
+    this.paused = false;
+    this.timerText = null;
+    this.bestText = null;
+    this.skipBtn = null;
+    this.revealBtn = null;
+    this.hintBtn = null;
+    this.boltBtn = null;
     this.history = [];
     this.selected = null;
     this.busy = false;
@@ -94,15 +135,34 @@ export class LevelScene extends Phaser.Scene {
     this.registry.set('levelId', data.id ?? 1);
   }
 
-  async create() {
-    const id = this.registry.get('levelId') as number;
-    const lvl = this.daily ? dailyLevel(this.daily) : await app.level(id);
-    if (!lvl) {
-      this.scene.start('Map');
-      return;
+  /** The level to play for the current mode (Rush and Zen make a new one on the phone). */
+  private async makeLevel(): Promise<LevelDef | null> {
+    switch (this.mode) {
+      case 'daily':
+        return dailyLevel(this.daily!);
+      case 'blueprint':
+        return app.blueprintLevel(this.modeIndex);
+      case 'rush':
+        return quickLevel(rushConfig(this.rushSolved), (Date.now() ^ (this.rushSolved * 7919)) >>> 0);
+      case 'zen': {
+        const seed = (Date.now() ^ (app.data.zen.solved * 104729)) >>> 0;
+        return quickLevel(zenConfig(app.data.zen.solved, new Rng(seed)), seed);
+      }
+      default:
+        return app.level(this.registry.get('levelId') as number);
     }
+  }
+
+  /** Reset everything that belongs to one puzzle. */
+  private setupLevel(lvl: LevelDef) {
     this.level = lvl;
     this.state = createState(lvl);
+    this.history = [];
+    this.selected = null;
+    this.undosUsed = 0;
+    this.hintsUsed = 0;
+    this.extraBolts = 0;
+    this.revealUntil = -1;
     this.chainTags.clear();
     let tag = 0;
     lvl.bolts.forEach((b) => {
@@ -110,11 +170,36 @@ export class LevelScene extends Phaser.Scene {
         this.chainTags.set(b.chain, String.fromCharCode(65 + tag++));
     });
     this.startTime = Date.now();
-    background(this, this.daily ? 0 : lvl.stage);
-    app.audio.startMusic(this.daily ? 3 : lvl.stage);
+  }
+
+  /** Rush and Zen: load the next puzzle without leaving the screen. */
+  private async nextPuzzle() {
+    const lvl = await this.makeLevel();
+    if (!lvl) return;
+    this.closeOverlay();
+    this.setupLevel(lvl);
+    this.bestText?.setText(app.t('best', { n: lvl.best }));
+    this.busy = false;
+    this.render();
+  }
+
+  async create() {
+    const lvl = await this.makeLevel();
+    if (!lvl) {
+      this.scene.start('Map');
+      return;
+    }
+    this.setupLevel(lvl);
+    const look = this.mode === 'stage' ? lvl.stage : MODE_LOOK[this.mode];
+    background(this, look);
+    app.audio.startMusic(this.mode === 'stage' ? lvl.stage : look);
     this.board = this.add.container(0, 0);
     this.hud();
     this.bar();
+    if (this.mode === 'rush') {
+      this.rushEnd = Date.now() + RUSH.seconds * 1000;
+      this.lastSolveAt = Date.now();
+    }
     this.render();
     app.analytics.log({ name: 'level_start', level: lvl.id });
     this.input.on('pointerup', (p: Phaser.Input.Pointer) => this.onPointerUp(p));
@@ -142,7 +227,9 @@ export class LevelScene extends Phaser.Scene {
     const maxRowH = (areaBottom - areaTop) / rows;
     const nutH = Math.min(nutW * 0.39, (maxRowH - 40) / (maxCap + 2.3));
     // Rows only as tall as needed; the board is centered in the free space.
-    const rowH = Math.min(maxRowH, nutH * (maxCap + 2.3) + 50);
+    // Blueprint: room under each bolt for its drawing.
+    const below = this.state.goal ? Math.min(100, nutH * 0.38 * maxCap + 34) : 0;
+    const rowH = Math.min(maxRowH, nutH * (maxCap + 2.3) + 50 + below);
     const top = areaTop + (areaBottom - areaTop - rowH * rows) / 2;
     this.layout = [];
     for (let i = 0; i < n; i++) {
@@ -150,7 +237,7 @@ export class LevelScene extends Phaser.Scene {
       const inRow = Math.min(perRow, n - r * perRow);
       const c = i - r * perRow;
       const x = width / 2 + (c - (inRow - 1) / 2) * slotW;
-      const baseY = top + rowH * (r + 1) - 24;
+      const baseY = top + rowH * (r + 1) - 24 - below;
       const cap = this.state.bolts[i].cap;
       const rodTop = baseY - 10 - nutH * (cap + 0.5);
       const fullTop = baseY - 10 - nutH * (maxCap + 0.5);
@@ -193,9 +280,18 @@ export class LevelScene extends Phaser.Scene {
           .setOrigin(0.5, 1)
           .setDisplaySize(Math.max(12, L.nutW * 0.19), rodH),
       );
+      const rod = this.board.list[this.board.list.length - 1] as Phaser.GameObjects.Image;
+      if (b.magnet) rod.setTint(0xe57373);
+      if (b.glue) rod.setTint(0x9ccc65);
       this.board.add(
         this.add.image(L.x, L.baseY + 4, 'base').setDisplaySize(L.nutW * 1.18, Math.max(16, L.nutH * 0.55)),
       );
+      if (b.magnet) this.board.add(this.add.image(L.x, L.baseY + 34, 'magnet').setDisplaySize(44, 40));
+      if (b.glue) {
+        this.board.add(this.add.image(L.x, L.rodTop + 6, 'glue').setDisplaySize(L.nutW * 0.5, 34));
+        this.board.add(this.add.image(L.x, L.baseY + 34, 'glue').setDisplaySize(44, 30));
+      }
+      if (s.goal) this.drawGoal(i, L, complete);
       if (this.chainTags.has(i))
         this.board.add(text(this, L.x, L.baseY + 30, '⛓' + this.chainTags.get(i), 20, '#cfd8dc'));
       const g = liftGroup(s, i);
@@ -249,6 +345,36 @@ export class LevelScene extends Phaser.Scene {
       }
     });
     this.updateHud();
+  }
+
+  /** Blueprint: the small drawing under a bolt showing what it must hold. */
+  private drawGoal(i: number, L: BoltLayout, done: boolean) {
+    const goal = this.state.goal![i] ?? [];
+    const cap = this.state.bolts[i].cap;
+    const cellH = Math.min(18, L.nutH * 0.38);
+    const w = L.nutW * 0.62;
+    const h = cellH * cap + 12;
+    const top = L.baseY + 22;
+    const g = this.add.graphics();
+    g.fillStyle(0x1e5aa8, 1).fillRoundedRect(L.x - w / 2, top, w, h, 6);
+    g.lineStyle(1, 0xffffff, 0.25);
+    for (let x = L.x - w / 2 + 8; x < L.x + w / 2; x += 8) g.lineBetween(x, top, x, top + h);
+    goal.forEach((c, k) => {
+      const y = top + h - 6 - cellH * (k + 1);
+      g.fillStyle(NUT_COLORS[c], 1).fillRoundedRect(L.x - w / 2 + 6, y + 1, w - 12, cellH - 2, 3);
+      g.lineStyle(1.5, 0xffffff, 0.9).strokeRoundedRect(L.x - w / 2 + 6, y + 1, w - 12, cellH - 2, 3);
+    });
+    if (goal.length === 0) {
+      g.lineStyle(2, 0xffffff, 0.6).lineBetween(L.x - w / 4, top + h / 2, L.x + w / 4, top + h / 2);
+    }
+    g.lineStyle(3, done ? 0x7cf29c : 0xffffff, done ? 1 : 0.8).strokeRoundedRect(L.x - w / 2, top, w, h, 6);
+    this.board.add(g);
+    if (app.data.settings.colorBlind) {
+      goal.forEach((c, k) => {
+        const y = top + h - 6 - cellH * (k + 0.5);
+        this.board.add(this.add.image(L.x, y, `sym-${c}`).setDisplaySize(cellH * 0.8, cellH * 0.8));
+      });
+    }
   }
 
   // ---------- input ----------
@@ -413,8 +539,22 @@ export class LevelScene extends Phaser.Scene {
     const g = this.add.graphics();
     g.fillStyle(0x000000, 0.3).fillRect(0, 0, width, 110);
     button(this, 60, 56, 84, 72, '‹', () => this.quitToMap(), UI.grey, 40);
-    const title = this.daily ? app.t('daily.title') : app.t('level', { n: this.level.id });
-    text(this, width / 2, 40, title, 34);
+    const titles: Record<Mode, string> = {
+      stage: app.t('level', { n: this.level.id }),
+      daily: app.t('daily.title'),
+      blueprint: app.t('blueprint.level', { n: this.level.id }),
+      rush: app.t('mode.rush'),
+      zen: app.t('mode.zen'),
+    };
+    text(this, width / 2, 40, titles[this.mode], 34);
+    button(this, width - 60, 56, 84, 72, 'II', () => this.pause(), UI.grey, 30);
+    this.movesText = text(this, width / 2, 150, '', 30, '#ffffff');
+    this.coins = coinChip(this, 120, 150);
+    if (this.mode === 'rush') {
+      this.timerText = text(this, width / 2, 84, '', 30, '#ffd166');
+      return;
+    }
+    if (this.mode === 'zen') return;
     const d = this.level.difficulty;
     const label =
       this.level.kind === 'boss'
@@ -424,25 +564,35 @@ export class LevelScene extends Phaser.Scene {
     const bw = 30 + label.length * 13;
     badge.fillStyle(UI.badge[d], 1).fillRoundedRect(width / 2 - bw / 2, 66, bw, 32, 16);
     text(this, width / 2, 82, label, 20);
-    button(this, width - 60, 56, 84, 72, 'II', () => this.pause(), UI.grey, 30);
-    this.movesText = text(this, width / 2, 150, '', 30, '#ffffff');
-    this.coins = coinChip(this, 120, 150);
-    text(this, width - 110, 150, app.t('best', { n: this.level.best }), 22, UI.textDim);
+    this.bestText = text(this, width - 110, 150, app.t('best', { n: this.level.best }), 22, UI.textDim);
   }
 
   private bar() {
     const { width, height } = this.scale;
     const y = height - BANNER_H - BAR_H / 2;
     const hasHidden = this.level.bolts.some((b) => b.nuts.some((n) => n.h));
-    const count = hasHidden ? 5 : 4;
+    // Which buttons each mode offers: Rush and Zen are about flow, so no paid boosters there.
+    const items: ('undo' | 'restart' | 'hint' | 'extra' | 'reveal' | 'skip')[] =
+      this.mode === 'rush'
+        ? ['undo', 'restart', 'skip']
+        : this.mode === 'zen'
+          ? ['undo', 'restart', 'hint', 'skip']
+          : ['undo', 'restart', 'hint', 'extra', ...(hasHidden ? (['reveal'] as const) : [])];
+    const count = items.length;
     const w = Math.min(150, (width - 40) / count - 12);
     const xs = (k: number) => width / 2 + (k - (count - 1) / 2) * (w + 12);
-    this.undoBtn = button(this, xs(0), y, w, 86, app.t('btn.undo'), () => this.undo(), UI.blue, 22);
-    button(this, xs(1), y, w, 86, app.t('btn.restart'), () => this.restart(), UI.grey, 22);
-    this.hintBtn = button(this, xs(2), y, w, 86, app.t('btn.hint'), () => this.useHint(), 0x9b5de5, 22);
-    this.boltBtn = button(this, xs(3), y, w, 86, app.t('btn.extra'), () => this.useExtraBolt(), UI.green, 22);
-    if (hasHidden)
-      this.revealBtn = button(this, xs(4), y, w, 86, app.t('btn.reveal'), () => this.useReveal(), 0xf28c28, 22);
+    items.forEach((it, k) => {
+      const x = xs(k);
+      if (it === 'undo') this.undoBtn = button(this, x, y, w, 86, app.t('btn.undo'), () => this.undo(), UI.blue, 22);
+      if (it === 'restart') button(this, x, y, w, 86, app.t('btn.restart'), () => this.restart(), UI.grey, 22);
+      if (it === 'hint')
+        this.hintBtn = button(this, x, y, w, 86, app.t('btn.hint'), () => this.useHint(), 0x9b5de5, 22);
+      if (it === 'extra')
+        this.boltBtn = button(this, x, y, w, 86, app.t('btn.extra'), () => this.useExtraBolt(), UI.green, 22);
+      if (it === 'reveal')
+        this.revealBtn = button(this, x, y, w, 86, app.t('btn.reveal'), () => this.useReveal(), 0xf28c28, 22);
+      if (it === 'skip') this.skipBtn = button(this, x, y, w, 86, app.t('btn.skip'), () => this.skip(), 0xf28c28, 22);
+    });
     // Reserved banner area (empty until ads are added).
     this.add.rectangle(width / 2, height - BANNER_H / 2, width, BANNER_H, 0x000000, 0.12);
   }
@@ -452,28 +602,48 @@ export class LevelScene extends Phaser.Scene {
   }
 
   private undoAllowance(): number {
+    if (this.mode === 'blueprint' || this.mode === 'rush' || this.mode === 'zen') return Infinity;
     return freeUndos(this.stageForRules()) - this.undosUsed;
+  }
+
+  /** Skip (Rush and Zen): a fresh puzzle. In Rush it costs 5 seconds and the combo. */
+  private skip() {
+    if (this.busy) return;
+    if (this.mode === 'rush') {
+      this.rushEnd -= 5000;
+      this.rushCombo = 0;
+    }
+    this.busy = true;
+    void this.nextPuzzle();
   }
 
   private updateHud() {
     if (!this.movesText) return;
     const s = this.state;
-    this.movesText.setText(
-      s.moveLimit ? app.t('movesLeft', { n: Math.max(0, s.moveLimit - s.moves) }) : app.t('moves', { n: s.moves }),
-    );
+    if (this.mode === 'rush') this.movesText.setText(app.t('rush.score', { n: this.rushScore }));
+    else if (this.mode === 'zen') this.movesText.setText(app.t('zen.solved', { n: app.data.zen.solved }));
+    else
+      this.movesText.setText(
+        s.moveLimit ? app.t('movesLeft', { n: Math.max(0, s.moveLimit - s.moves) }) : app.t('moves', { n: s.moves }),
+      );
     this.movesText.setColor(s.moveLimit && s.moveLimit - s.moves <= 3 ? '#ff8a80' : '#ffffff');
     const free = this.undoAllowance();
     this.undoBtn.setBadge(free === Infinity ? null : String(Math.max(0, free) + app.data.boosters.undo));
     this.undoBtn.setEnabled(this.history.length > 0);
-    this.hintBtn.setBadge(this.isTutorial() ? null : String(app.data.boosters.hint));
-    this.boltBtn.setBadge(String(app.data.boosters.extraBolt));
-    this.boltBtn.setEnabled(this.extraBolts < 2);
+    this.hintBtn?.setBadge(this.freeHints() ? null : String(app.data.boosters.hint));
+    this.boltBtn?.setBadge(String(app.data.boosters.extraBolt));
+    this.boltBtn?.setEnabled(this.extraBolts < 2);
     this.revealBtn?.setBadge(String(app.data.boosters.reveal));
     this.coins.refresh();
   }
 
   private isTutorial() {
-    return !this.daily && this.level.id <= 3;
+    return this.mode === 'stage' && this.level.id <= 3;
+  }
+
+  /** Hints are free in the tutorial and in Zen mode. */
+  private freeHints() {
+    return this.isTutorial() || this.mode === 'zen';
   }
 
   /** Use one booster from the inventory, or buy one with coins after asking. */
@@ -551,7 +721,7 @@ export class LevelScene extends Phaser.Scene {
       this.hintsUsed++;
       this.showHint(m);
     };
-    if (this.isTutorial()) show();
+    if (this.freeHints()) show();
     else this.withBooster('hint', show);
   }
 
@@ -638,7 +808,7 @@ export class LevelScene extends Phaser.Scene {
 
   /** Level 1: a pointing hand walks the player through the solver's moves. */
   private tutorialStep() {
-    if (this.level.id !== 1 || this.daily) return;
+    if (this.level.id !== 1 || this.mode !== 'stage') return;
     this.tutorialHand?.destroy();
     this.tutorialHand = null;
     if (status(this.state) !== 'playing') return;
@@ -676,6 +846,20 @@ export class LevelScene extends Phaser.Scene {
   private closeOverlay() {
     this.overlay?.destroy();
     this.overlay = null;
+    this.paused = false;
+  }
+
+  /** Rush timer. The clock stops while the pause menu is open. */
+  override update(_t: number, dt: number) {
+    if (this.mode !== 'rush' || !this.timerText || this.rushOverShown) return;
+    if (this.paused) {
+      this.rushEnd += dt;
+      return;
+    }
+    const left = Math.max(0, Math.ceil((this.rushEnd - Date.now()) / 1000));
+    this.timerText.setText('⏱ ' + app.t('rush.time', { n: left }));
+    this.timerText.setColor(left <= 10 ? '#ff8a80' : '#ffd166');
+    if (left <= 0 && !this.busy) this.rushOver();
   }
 
   private pause() {
@@ -683,6 +867,7 @@ export class LevelScene extends Phaser.Scene {
     const { width, height } = this.scale;
     const o = this.add.container(0, 0).setDepth(500);
     this.overlay = o;
+    this.paused = true;
     o.add(dim(this));
     o.add(panel(this, width / 2, height / 2, 520, 600));
     o.add(text(this, width / 2, height / 2 - 230, app.t('pause.title'), 40));
@@ -702,7 +887,7 @@ export class LevelScene extends Phaser.Scene {
           s[key] = !s[key];
           app.applySettings();
           if (key === 'music') {
-            if (s.music) app.audio.startMusic(this.level.stage);
+            if (s.music) app.audio.startMusic(this.mode === 'stage' ? this.level.stage : MODE_LOOK[this.mode]);
             else app.audio.stopMusic();
           }
           b.setAlpha(s[key] ? 1 : 0.45);
@@ -741,7 +926,9 @@ export class LevelScene extends Phaser.Scene {
     // Always at least one action: Undo, Restart, and (when stuck) Extra Bolt.
     o.add(button(this, width / 2, height / 2 - 10, 380, 86, app.t('btn.undo'), () => this.undo(), UI.blue));
     o.add(button(this, width / 2, height / 2 + 90, 380, 86, app.t('btn.restart'), () => this.restart(), UI.grey));
-    if (kind === 'stuck' && this.extraBolts < 2) {
+    if (this.mode === 'rush' || this.mode === 'zen') {
+      o.add(button(this, width / 2, height / 2 + 190, 380, 86, app.t('btn.skip'), () => this.skip(), 0xf28c28));
+    } else if (kind === 'stuck' && this.extraBolts < 2) {
       o.add(
         button(
           this,
@@ -762,12 +949,20 @@ export class LevelScene extends Phaser.Scene {
   }
 
   private win() {
+    if (this.mode === 'rush') return this.rushWin();
+    if (this.mode === 'zen') return this.zenWin();
     const lvl = this.level;
     const moves = this.state.moves;
     const stars = starsFor(lvl, moves);
     const d = app.data;
     let coins = 0;
-    if (this.daily) {
+    if (this.mode === 'blueprint') {
+      const prev = d.blueprint.stars[lvl.id] ?? 0;
+      coins = coinsFor(lvl, stars, prev, app.remote.values.rewards);
+      d.blueprint.stars[lvl.id] = Math.max(prev, stars);
+      d.blueprint.unlocked = Math.max(d.blueprint.unlocked, Math.min(lvl.id + 1, app.blueprintCount));
+      app.analytics.log({ name: 'mode_played', mode: 'blueprint', won: true });
+    } else if (this.daily) {
       const prev = d.daily[this.daily];
       coins = prev ? 2 : 50 + (stars === 3 ? 20 : 0);
       d.daily[this.daily] = {
@@ -786,7 +981,7 @@ export class LevelScene extends Phaser.Scene {
       d.unlocked = Math.max(d.unlocked, Math.min(lvl.id + 1, app.totalLevels));
       if (lvl.id >= 3) d.tutorialDone = true;
     }
-    app.addCoins(coins, this.daily ? 'daily' : 'level');
+    app.addCoins(coins, this.mode);
     void app.save.save();
     app.levelsWonThisSession++;
     app.analytics.log({
@@ -848,7 +1043,7 @@ export class LevelScene extends Phaser.Scene {
     );
     o.add(this.add.image(width / 2 - 70, height / 2 + 30, 'coin'));
     o.add(text(this, width / 2 + 30, height / 2 + 30, app.t('win.coins', { n: coins }), 32, '#f3c14b'));
-    const isLastOfStage = !this.daily && this.level.id % 50 === 0;
+    const isLastOfStage = this.mode === 'stage' && this.level.id % 50 === 0;
     if (isLastOfStage) o.add(text(this, width / 2, height / 2 + 90, app.t('stageDone'), 24, '#7cf29c'));
     if (this.daily) {
       o.add(
@@ -863,6 +1058,36 @@ export class LevelScene extends Phaser.Scene {
           UI.green,
         ),
       );
+    } else if (this.mode === 'blueprint') {
+      const hasNext = this.level.id < app.blueprintCount;
+      const go = (data: LevelData | null) => (data ? this.scene.restart(data) : this.scene.start('Blueprint'));
+      o.add(
+        button(
+          this,
+          width / 2,
+          height / 2 + 170,
+          380,
+          96,
+          hasNext ? app.t('btn.next') : app.t('btn.back'),
+          () => go(hasNext ? { blueprint: this.level.id + 1 } : null),
+          UI.green,
+          32,
+        ),
+      );
+      o.add(
+        button(
+          this,
+          width / 2 - 100,
+          height / 2 + 280,
+          180,
+          76,
+          app.t('btn.retry'),
+          () => go({ blueprint: this.level.id }),
+          UI.blue,
+          24,
+        ),
+      );
+      o.add(button(this, width / 2 + 100, height / 2 + 280, 180, 76, app.t('btn.back'), () => go(null), UI.grey, 24));
     } else {
       const hasNext = this.level.id < app.totalLevels;
       o.add(
@@ -916,6 +1141,98 @@ export class LevelScene extends Phaser.Scene {
     else this.scene.start('Map');
   }
 
+  // ---------- Rush and Zen ----------
+
+  private rushWin() {
+    const now = Date.now();
+    this.rushCombo = now - this.lastSolveAt < RUSH.comboWindow * 1000 ? this.rushCombo + 1 : 0;
+    this.lastSolveAt = now;
+    const pts = rushPoints(this.level.best, this.state.moves, this.rushCombo);
+    this.rushScore += pts;
+    this.rushSolved++;
+    this.rushEnd += RUSH.bonusSeconds * 1000;
+    app.audio.complete();
+    app.haptics.win();
+    const msg = `+${pts}` + (this.rushCombo > 0 ? `  ${app.t('rush.combo', { n: this.rushCombo + 1 })}` : '');
+    toast(this, msg);
+    this.busy = true;
+    this.time.delayedCall(500, () => void this.nextPuzzle());
+  }
+
+  private rushOver() {
+    this.rushOverShown = true;
+    this.closeOverlay();
+    const d = app.data;
+    const newBest = this.rushScore > d.rush.best;
+    d.rush.best = Math.max(d.rush.best, this.rushScore);
+    d.rush.runs++;
+    const coins = Math.round(this.rushScore / 50);
+    app.addCoins(coins, 'rush');
+    void app.save.save();
+    app.analytics.log({ name: 'mode_played', mode: 'rush', won: true, score: this.rushScore });
+    app.audio.win();
+    if (newBest) this.confetti();
+    const { width, height } = this.scale;
+    const o = this.add.container(0, 0).setDepth(500);
+    this.overlay = o;
+    o.add(dim(this, 0.6));
+    o.add(panel(this, width / 2, height / 2, 600, 640));
+    o.add(text(this, width / 2, height / 2 - 250, app.t('rush.over'), 44, '#ffd166'));
+    o.add(text(this, width / 2, height / 2 - 160, app.t('rush.score', { n: this.rushScore }), 40));
+    o.add(text(this, width / 2, height / 2 - 100, app.t('rush.solved', { n: this.rushSolved }), 26, UI.textDim));
+    o.add(
+      text(
+        this,
+        width / 2,
+        height / 2 - 50,
+        newBest ? app.t('rush.newBest') : app.t('mode.best', { n: d.rush.best }),
+        28,
+        newBest ? '#7cf29c' : UI.textDim,
+      ),
+    );
+    o.add(this.add.image(width / 2 - 70, height / 2 + 20, 'coin'));
+    o.add(text(this, width / 2 + 30, height / 2 + 20, app.t('win.coins', { n: coins }), 32, '#f3c14b'));
+    o.add(
+      button(
+        this,
+        width / 2,
+        height / 2 + 140,
+        380,
+        96,
+        app.t('btn.again'),
+        () => this.scene.restart({ rush: true }),
+        UI.green,
+        32,
+      ),
+    );
+    o.add(
+      button(
+        this,
+        width / 2,
+        height / 2 + 250,
+        260,
+        76,
+        app.t('btn.back'),
+        () => this.scene.start('Modes'),
+        UI.grey,
+        24,
+      ),
+    );
+    this.coins.refresh();
+  }
+
+  private zenWin() {
+    app.data.zen.solved++;
+    app.addCoins(3, 'zen');
+    void app.save.save();
+    app.analytics.log({ name: 'mode_played', mode: 'zen', won: true });
+    app.audio.win();
+    this.confetti();
+    toast(this, app.t('win.coins', { n: 3 }));
+    this.busy = true;
+    this.time.delayedCall(1300, () => void this.nextPuzzle());
+  }
+
   private confetti() {
     const { width } = this.scale;
     for (let k = 0; k < 60; k++) {
@@ -950,6 +1267,13 @@ export class LevelScene extends Phaser.Scene {
         });
       }
     }
-    this.scene.start(this.daily ? 'Daily' : 'Map');
+    const back: Record<Mode, string> = {
+      stage: 'Map',
+      daily: 'Daily',
+      blueprint: 'Blueprint',
+      rush: 'Modes',
+      zen: 'Modes',
+    };
+    this.scene.start(back[this.mode]);
   }
 }
