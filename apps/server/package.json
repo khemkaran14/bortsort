@@ -5,8 +5,8 @@
   "type": "module",
   "description": "Bolt Sort backend: OTP login, accounts, subscriptions, house ads and the admin panel",
   "scripts": {
-    "start": "tsx src/index.ts",
-    "dev": "tsx watch src/index.ts"
+    "start": "tsx --env-file-if-exists=.env src/index.ts",
+    "dev": "tsx watch --env-file-if-exists=.env src/index.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

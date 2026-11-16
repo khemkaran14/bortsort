@@ -14,13 +14,21 @@ tracking, and the admin panel. Node + Express + SQLite; one small process.
 
 ## Run locally
 
-```bash
-ADMIN_EMAIL=you@example.com ADMIN_PASSWORD='a-long-password' npm run server
-```
+1. Create `apps/server/.env` with at least:
 
-Login codes are printed in the terminal (`[dev OTP] +91…: 123456`) until an SMS/email provider is
-set. Admin panel: http://localhost:3200/admin. Point the game at it with
-`VITE_API_URL=http://localhost:3200 npm run dev`.
+   ```
+   ADMIN_EMAIL=you@example.com
+   ADMIN_PASSWORD=choose-a-long-password
+   ```
+
+2. In one terminal start the server: `npm run server` (it prints `Admin panel: http://localhost:3200/admin`).
+3. In a second terminal start the game: `npm run dev`.
+4. Open **http://localhost:3200/admin** (or http://localhost:5173/admin, which forwards to it) and
+   log in with the email and password from step 1.
+
+Login codes are printed in the server terminal (`[dev OTP] +91…: 123456`) until an SMS/email
+provider is set. To make the game use the local server for login and ads, put
+`VITE_API_URL=http://localhost:3200` in `packages/game/.env` and restart `npm run dev`.
 
 ## Put it on your VPS
 

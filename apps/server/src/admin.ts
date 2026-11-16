@@ -73,9 +73,12 @@ export function adminRouter(db: DB, cfg: Config) {
   /** Forms must come from this site (cookie is SameSite=Strict as well). */
   const sameOrigin = (req: Request, res: Response, next: NextFunction) => {
     const origin = req.get('origin');
+    // Development only: also accept the game's dev server (localhost:5173 forwards /admin here).
+    const devLocal = !cfg.production && !!origin && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
     if (
       req.method === 'POST' &&
       origin &&
+      !devLocal &&
       origin !== new URL(cfg.publicUrl).origin &&
       origin !== `${req.protocol}://${req.get('host')}`
     ) {
