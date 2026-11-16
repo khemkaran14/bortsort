@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { view } from '../view';
 import type { TextKey } from '@bolt-sort/services';
 import { app } from '../app';
 import { UI } from '../theme';
@@ -15,7 +16,7 @@ export class SettingsScene extends Phaser.Scene {
 
   create(data?: { from?: string }) {
     if (data?.from) this.from = data.from;
-    const { width, height } = this.scale;
+    const { width, height } = view(this);
     background(this, 1);
     this.events.on('back', () => this.scene.start(this.from));
     button(this, 60, 56, 84, 72, '‹', () => this.scene.start(this.from), UI.grey, 40);

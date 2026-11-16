@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { HD, hd, view } from '../view';
+import { NUT_BODY, NUT_FILL, NUT_H } from '../textures';
 import {
   BOOSTERS,
   addExtraBolt,
@@ -216,7 +218,7 @@ export class LevelScene extends Phaser.Scene {
   // ---------- layout & drawing ----------
 
   private computeLayout() {
-    const { width, height } = this.scale;
+    const { width, height } = view(this);
     const n = this.state.bolts.length;
     const maxCap = Math.max(...this.state.bolts.map((b) => b.cap));
     const rows = n <= 5 ? 1 : n <= 10 ? 2 : 3;
@@ -275,13 +277,11 @@ export class LevelScene extends Phaser.Scene {
       });
       this.board.add(zone);
       const rodH = L.baseY - L.rodTop;
-      this.board.add(
-        this.add
-          .image(L.x, L.baseY, 'rod')
-          .setOrigin(0.5, 1)
-          .setDisplaySize(Math.max(12, L.nutW * 0.19), rodH),
-      );
-      const rod = this.board.list[this.board.list.length - 1] as Phaser.GameObjects.Image;
+      // Threaded rod: a repeating metal tile, so the thread stays crisp at any height.
+      const rodW = Math.max(12, L.nutW * 0.19);
+      const rod = this.add.tileSprite(L.x, L.baseY, rodW, rodH, 'rod').setOrigin(0.5, 1);
+      rod.setTileScale(rodW / (24 * HD), rodW / (24 * HD));
+      this.board.add(rod);
       if (b.magnet) rod.setTint(0xe57373);
       if (b.glue) rod.setTint(0x9ccc65);
       this.board.add(
@@ -304,7 +304,12 @@ export class LevelScene extends Phaser.Scene {
         const y = lifted ? this.liftedY(i, fromTop) : this.nutY(i, k);
         const showColor = !nut.h || reveal;
         const c = this.add.container(L.x, y);
-        c.add(this.add.image(0, 0, showColor ? `nut-${nut.c}` : 'nut-hidden').setDisplaySize(L.nutW, L.nutH));
+        c.add(
+          this.add
+            .image(0, 0, showColor ? `nut-${nut.c}` : 'nut-hidden')
+            .setOrigin(0.5, (2 + NUT_BODY / 2) / NUT_H)
+            .setDisplaySize(L.nutW, L.nutH * NUT_FILL),
+        );
         if (!showColor) c.add(text(this, 0, 0, '?', Math.round(L.nutH * 0.7), '#ffffff'));
         else if (app.data.settings.colorBlind)
           c.add(this.add.image(0, 0, `sym-${nut.c}`).setDisplaySize(L.nutH * 0.62, L.nutH * 0.62));
@@ -339,7 +344,7 @@ export class LevelScene extends Phaser.Scene {
             this.add
               .image(L.x - L.nutW * 0.3 + ((y / 26) % 2) * L.nutW * 0.6, y, 'chain')
               .setAngle(40)
-              .setScale(0.8),
+              .setScale(0.8 / HD),
           );
         }
         this.board.add(text(this, L.x, L.baseY + 30, '⛓' + (this.chainTags.get(b.chain) ?? ''), 20, '#ffd166'));
@@ -511,14 +516,15 @@ export class LevelScene extends Phaser.Scene {
       const sp = this.add
         .image(L.x, L.rodTop, 'spark')
         .setTint(k % 2 ? 0xffe08a : 0xffffff)
-        .setScale(0.7);
+        .setBlendMode(Phaser.BlendModes.ADD)
+        .setScale(1.6 / HD);
       const a = (k / 14) * Math.PI * 2;
       this.tweens.add({
         targets: sp,
         x: L.x + Math.cos(a) * 70,
         y: L.rodTop + Math.sin(a) * 70,
         alpha: 0,
-        scale: 0.1,
+        scale: 0.2 / HD,
         duration: 450,
         onComplete: () => sp.destroy(),
       });
@@ -536,7 +542,7 @@ export class LevelScene extends Phaser.Scene {
   // ---------- HUD & boosters ----------
 
   private hud() {
-    const { width } = this.scale;
+    const { width } = view(this);
     const g = this.add.graphics();
     g.fillStyle(0x000000, 0.3).fillRect(0, 0, width, 110);
     button(this, 60, 56, 84, 72, '‹', () => this.quitToMap(), UI.grey, 40);
@@ -569,7 +575,7 @@ export class LevelScene extends Phaser.Scene {
   }
 
   private bar() {
-    const { width, height } = this.scale;
+    const { width, height } = view(this);
     const y = height - BANNER_H - BAR_H / 2;
     const hasHidden = this.level.bolts.some((b) => b.nuts.some((n) => n.h));
     // Which buttons each mode offers: Rush and Zen are about flow, so no paid boosters there.
@@ -744,15 +750,16 @@ export class LevelScene extends Phaser.Scene {
     const hand = this.add
       .image(a.x + 20, a.rodTop + 30, 'hand')
       .setOrigin(0.3, 0)
+      .setScale(1 / HD)
       .setDepth(50);
     this.tweens.chain({
       targets: hand,
       loop: -1,
       tweens: [
         { x: a.x + 20, y: a.rodTop + 30, duration: 0 },
-        { scale: 0.85, duration: 200, yoyo: true },
+        { scale: 0.85 / HD, duration: 200, yoyo: true },
         { x: b.x + 20, y: b.rodTop + 30, duration: 500, ease: 'Sine.inOut' },
-        { scale: 0.85, duration: 200, yoyo: true },
+        { scale: 0.85 / HD, duration: 200, yoyo: true },
         { alpha: 1, duration: 300 },
       ],
     });
@@ -825,6 +832,7 @@ export class LevelScene extends Phaser.Scene {
     const hand = this.add
       .image(L.x + 10, L.rodTop + 10, 'hand')
       .setOrigin(0.3, 0)
+      .setScale(1 / HD)
       .setDepth(60);
     this.tweens.add({ targets: hand, y: '+=24', yoyo: true, repeat: -1, duration: 400 });
     this.tutorialHand = hand;
@@ -832,7 +840,7 @@ export class LevelScene extends Phaser.Scene {
 
   private showBanner(msg: string) {
     this.banner?.destroy();
-    const { width } = this.scale;
+    const { width } = view(this);
     const c = this.add.container(width / 2, HUD_H + 10).setDepth(40);
     const t = text(this, 0, 0, msg, 24).setWordWrapWidth(width - 100);
     const g = this.add.graphics();
@@ -867,7 +875,7 @@ export class LevelScene extends Phaser.Scene {
 
   private pause() {
     if (this.overlay) return;
-    const { width, height } = this.scale;
+    const { width, height } = view(this);
     const o = this.add.container(0, 0).setDepth(500);
     this.overlay = o;
     this.paused = true;
@@ -907,7 +915,7 @@ export class LevelScene extends Phaser.Scene {
   }
 
   private stuck(kind: 'stuck' | 'outOfMoves') {
-    const { width, height } = this.scale;
+    const { width, height } = view(this);
     const o = this.add.container(0, 0).setDepth(500);
     this.overlay = o;
     o.add(dim(this, 0.5));
@@ -1010,7 +1018,7 @@ export class LevelScene extends Phaser.Scene {
   }
 
   private resultScreen(stars: number, moves: number, coins: number) {
-    const { width, height } = this.scale;
+    const { width, height } = view(this);
     const o = this.add.container(0, 0).setDepth(500);
     this.overlay = o;
     o.add(dim(this, 0.55));
@@ -1019,12 +1027,12 @@ export class LevelScene extends Phaser.Scene {
     for (let k = 0; k < 3; k++) {
       const st = this.add
         .image(width / 2 + (k - 1) * 130, height / 2 - 170 + (k === 1 ? -20 : 0), 'star')
-        .setScale(k === 1 ? 2 : 1.6);
+        .setScale((k === 1 ? 2 : 1.6) / HD);
       st.setTint(0x2b3540);
       o.add(st);
       if (k < stars) {
         this.time.delayedCall(300 + k * 250, () => {
-          st.setTint(0xf3c14b);
+          st.clearTint();
           this.tweens.add({
             targets: st,
             scale: { from: st.scale * 1.5, to: st.scale },
@@ -1045,7 +1053,7 @@ export class LevelScene extends Phaser.Scene {
         UI.textDim,
       ),
     );
-    o.add(this.add.image(width / 2 - 70, height / 2 + 30, 'coin'));
+    o.add(hd(this.add.image(width / 2 - 70, height / 2 + 30, 'coin')));
     o.add(text(this, width / 2 + 30, height / 2 + 30, app.t('win.coins', { n: coins }), 32, '#f3c14b'));
     const isLastOfStage = this.mode === 'stage' && this.level.id % 50 === 0;
     if (isLastOfStage) o.add(text(this, width / 2, height / 2 + 90, app.t('stageDone'), 24, '#7cf29c'));
@@ -1184,7 +1192,7 @@ export class LevelScene extends Phaser.Scene {
     app.analytics.log({ name: 'mode_played', mode: 'rush', won: true, score: this.rushScore });
     app.audio.win();
     if (newBest) this.confetti();
-    const { width, height } = this.scale;
+    const { width, height } = view(this);
     const o = this.add.container(0, 0).setDepth(500);
     this.overlay = o;
     o.add(dim(this, 0.6));
@@ -1202,7 +1210,7 @@ export class LevelScene extends Phaser.Scene {
         newBest ? '#7cf29c' : UI.textDim,
       ),
     );
-    o.add(this.add.image(width / 2 - 70, height / 2 + 20, 'coin'));
+    o.add(hd(this.add.image(width / 2 - 70, height / 2 + 20, 'coin')));
     o.add(text(this, width / 2 + 30, height / 2 + 20, app.t('win.coins', { n: coins }), 32, '#f3c14b'));
     o.add(
       button(
@@ -1246,10 +1254,11 @@ export class LevelScene extends Phaser.Scene {
   }
 
   private confetti() {
-    const { width } = this.scale;
+    const { width } = view(this);
     for (let k = 0; k < 60; k++) {
       const c = this.add
         .image(Phaser.Math.Between(0, width), -20, 'confetti')
+        .setScale(1 / HD)
         .setTint(NUT_COLORS[k % NUT_COLORS.length])
         .setDepth(600)
         .setAngle(Phaser.Math.Between(0, 360));

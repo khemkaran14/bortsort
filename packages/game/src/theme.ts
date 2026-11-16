@@ -96,7 +96,7 @@ export const SKINS: SkinItem[] = [
 ];
 
 export const UI = {
-  font: 'system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Devanagari", sans-serif',
+  font: '"Baloo 2", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Devanagari", sans-serif',
   panel: 0x1d2b3a,
   panelLight: 0x2a3d52,
   gold: 0xf3c14b,

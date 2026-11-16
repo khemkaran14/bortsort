@@ -239,7 +239,9 @@ export function adminRouter(db: DB, cfg: Config) {
                 (u) =>
                   html`<tr>
                     <td>${u.id}</td>
-                    <td>${u.phone ?? u.email}</td>
+                    <td>
+                      ${u.phone ?? u.email ?? 'Google user'}${u.google_sub ? html` <span class="pill">Google</span>` : ''}
+                    </td>
                     <td>${u.name ?? ''}</td>
                     <td>${fmtDate(u.created_at)}</td>
                     <td>${fmtDate(u.last_seen_at)}</td>
@@ -278,7 +280,8 @@ export function adminRouter(db: DB, cfg: Config) {
         `User ${u.id}`,
         html`<div class="card">
             <p>
-              <b>${u.phone ?? u.email}</b> ${u.name ? `(${u.name})` : ''}
+              <b>${u.phone ?? u.email ?? 'Google user'}</b> ${u.name ? `(${u.name})` : ''}
+              ${u.google_sub ? html`<span class="pill">Google</span>` : ''}
               ${u.blocked ? html`<span class="pill bad">Blocked</span>` : ''}
             </p>
             <p class="dim">
@@ -398,7 +401,7 @@ export function adminRouter(db: DB, cfg: Config) {
               ${rows.map(
                 (s) =>
                   html`<tr>
-                    <td><a href="/admin/users/${s.user_id}">${s.phone ?? s.email}</a></td>
+                    <td><a href="/admin/users/${s.user_id}">${s.phone ?? s.email ?? `Google user ${s.user_id}`}</a></td>
                     <td>${PLANS[s.plan]?.name ?? s.plan}</td>
                     <td>
                       ${s.status === 'active' && s.expires_at > t ? html`<span class="pill ok">active</span>` : html`<span class="pill">${s.status === 'active' ? 'expired' : s.status}</span>`}

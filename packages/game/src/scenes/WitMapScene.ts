@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { HD, RES, view } from '../view';
+import { nodeTexture } from '../textures';
 import { app } from '../app';
 import { UI } from '../theme';
 import { WIT_LEVELS } from '../wit/levels';
@@ -13,7 +15,7 @@ export class WitMapScene extends Phaser.Scene {
   }
 
   create() {
-    const { width, height } = this.scale;
+    const { width, height } = view(this);
     background(this, 30);
     app.audio.startMusic(7);
     this.events.on('back', () => this.scene.start('GameSelect'));
@@ -30,12 +32,13 @@ export class WitMapScene extends Phaser.Scene {
       const done = !!d.solved[n];
       const cur = n === d.unlocked && !done;
       const node = this.add.container(x, y);
-      const g = this.add.graphics();
-      const col = !open ? 0x4a5560 : done ? 0x3cb371 : cur ? 0xffd166 : 0x7b3fa0;
-      g.fillStyle(0x000000, 0.3).fillCircle(0, 6, 46);
-      g.fillStyle(col, 1).fillCircle(0, 0, 46);
-      g.lineStyle(3, 0xffffff, 0.8).strokeCircle(0, 0, 46);
-      node.add(g);
+      const col = !open ? 0x4a5560 : done ? 0x3cb371 : cur ? 0xffd166 : 0x8e4fc0;
+      node.add(
+        this.add
+          .image(0, 0, nodeTexture(this, col))
+          .setOrigin(0.5, 48 / 104)
+          .setScale(46 / 44 / HD),
+      );
       node.add(text(this, 0, -2, open ? String(n) : '🔒', 30, cur ? '#4a2c6e' : '#ffffff'));
       if (done) node.add(text(this, 30, 30, '✓', 22, '#ffffff'));
       if (cur) this.tweens.add({ targets: node, scale: 1.1, yoyo: true, repeat: -1, duration: 600 });
@@ -57,7 +60,7 @@ export class WitMapScene extends Phaser.Scene {
     this.input.on('pointerdown', () => (this.moved = 0));
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
       if (!p.isDown) return;
-      const dy = p.position.y - p.prevPosition.y;
+      const dy = (p.position.y - p.prevPosition.y) / RES;
       this.moved += Math.abs(dy);
       scroll = Phaser.Math.Clamp(scroll - dy, 0, maxScroll);
       content.y = -scroll;

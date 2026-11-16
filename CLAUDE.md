@@ -23,7 +23,7 @@ TypeScript · Phaser 3 · Vite · Capacitor 8 (Android + iOS) · Vitest · ESLin
   Puzzle text lives in `levels.ts` as `{ en, hi }` pairs; screen chrome text uses `t()`.
 - `tools/e2e/wit-playthrough.cjs` — plays all 50 Wit Twist puzzles in a browser via their `solve()`.
 - `tools/level-gen` — CLI that builds `stage-XX.json` (`npm run levels`), and `check` to re-verify.
-- `apps/server` — backend (Express + SQLite): OTP login (phone/email), accounts, subscriptions, house ads
+- `apps/server` — backend (Express + SQLite): OTP login (phone/email), Sign in with Google, accounts, subscriptions, house ads
   with click redirect `/r/:id`, admin panel `/admin`, `/delete-account`. See `apps/server/README.md`.
   The app talks to it through `ApiClient`/`AccountService`/`HouseAds` in `packages/services`;
   `VITE_API_URL` (in `packages/game/.env`) sets the address; empty = offline build, no login or ads.
@@ -61,6 +61,15 @@ TypeScript · Phaser 3 · Vite · Capacitor 8 (Android + iOS) · Vitest · ESLin
   levels, art or characters from other games.
 - Use `{id:text}` in a question to make a word tappable/draggable; the same ids must exist in en and hi.
 - Every puzzle needs a `solve()` that passes the playthrough in both languages.
+
+## Graphics
+
+- Layout is always 720 wide; the canvas is `RES`× bigger and each scene's camera zooms by `RES`
+  (`view(this)` in `packages/game/src/view.ts` — call it for sizes, never `this.scale`).
+- Use `pointer.worldX/worldY` (layout units), not `pointer.x/y`.
+- Art is drawn in code with Canvas 2D in `textures.ts` at `HD`× size: show generated images with
+  `setDisplaySize(...)` or `hd(image, scale)`, never a bare `setScale`.
+- Buttons and panels are 9-slice (`button()`, `panel()` in `ui.ts`); font is Baloo 2 (bundled, has Hindi).
 
 ## Conventions
 

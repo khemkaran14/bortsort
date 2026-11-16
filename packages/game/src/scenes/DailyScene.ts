@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { view } from '../view';
 import { todayLocal } from '@bolt-sort/services';
 import { app } from '../app';
 import { UI } from '../theme';
@@ -11,7 +12,7 @@ export class DailyScene extends Phaser.Scene {
   }
 
   create() {
-    const { width, height } = this.scale;
+    const { width, height } = view(this);
     background(this, 0);
     this.events.on('back', () => this.scene.start('Modes'));
     button(this, 60, 56, 84, 72, '‹', () => this.scene.start('Modes'), UI.grey, 40);

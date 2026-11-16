@@ -20,9 +20,15 @@ beforeAll(async () => {
     ADMIN_PASSWORD: 'correct horse battery',
     UPLOAD_DIR: join(dir, 'uploads'),
     PUBLIC_URL: 'http://test.local',
+    GOOGLE_CLIENT_IDS: 'test-client',
   } as NodeJS.ProcessEnv);
   db = openDb(':memory:');
-  server = createApp(db, cfg, makeSender(cfg)).listen(0);
+  // Fake Google check: tokens look like "good:<sub>:<email>:<verified>".
+  const fakeGoogle = async (t: string) => {
+    const [ok, sub, email, verified] = t.split(':');
+    return ok === 'good' ? { sub, email: email || null, emailVerified: verified === '1', name: 'G User' } : null;
+  };
+  server = createApp(db, cfg, makeSender(cfg), fakeGoogle).listen(0);
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 });
 afterAll(() => server.close());
@@ -131,6 +137,38 @@ describe('OTP login', () => {
     });
     expect(del.status).toBe(200);
     expect(db.prepare('SELECT 1 FROM users WHERE phone = ?').get('+919000000004')).toBeUndefined();
+  });
+});
+
+describe('Sign in with Google', () => {
+  it('rejects tokens Google did not sign', async () => {
+    expect((await post('/api/auth/google', { idToken: 'forged' })).status).toBe(401);
+  });
+
+  it('creates an account and finds it again by Google id', async () => {
+    const a = await (await post('/api/auth/google', { idToken: 'good:sub-1:new@example.com:1' })).json();
+    expect(a.user.email).toBe('new@example.com');
+    const b = await (await post('/api/auth/google', { idToken: 'good:sub-1:new@example.com:1' })).json();
+    expect(b.user.id).toBe(a.user.id);
+  });
+
+  it('links to an existing email account only when Google verified the email', async () => {
+    await post('/api/auth/otp', { channel: 'email', email: 'linked@example.com' });
+    const e = await (
+      await post('/api/auth/verify', {
+        channel: 'email',
+        email: 'linked@example.com',
+        code: lastCode('linked@example.com'),
+      })
+    ).json();
+    const unverified = await (await post('/api/auth/google', { idToken: 'good:sub-2:linked@example.com:0' })).json();
+    expect(unverified.user.id).not.toBe(e.user.id);
+    const verified = await (await post('/api/auth/google', { idToken: 'good:sub-3:linked@example.com:1' })).json();
+    expect(verified.user.id).toBe(e.user.id);
+  });
+
+  it('tells the app Google login is available', async () => {
+    expect(await (await fetch(base + '/api/auth/options')).json()).toEqual({ phone: true, email: true, google: true });
   });
 });
 

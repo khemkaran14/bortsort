@@ -1,4 +1,5 @@
 import { Preferences } from '@capacitor/preferences';
+import { SocialLogin } from '@capgo/capacitor-social-login';
 
 export interface AccountUser {
   id: number;
@@ -118,7 +119,37 @@ export class AccountService {
     return r.user;
   }
 
+  private googleReady = false;
+
+  /**
+   * Sign in with Google: Google shows its own account picker; we send the signed ID token to our
+   * server, which checks it with Google before logging in.
+   */
+  async googleLogin(ids: { webClientId: string; iOSClientId?: string }) {
+    if (!this.googleReady) {
+      await SocialLogin.initialize({
+        google: {
+          webClientId: ids.webClientId,
+          iOSClientId: ids.iOSClientId,
+          iOSServerClientId: ids.webClientId,
+          mode: 'online',
+          skipAuthOnlyAuthorizationAfterSignIn: true,
+        },
+      });
+      this.googleReady = true;
+    }
+    const res = await SocialLogin.login({ provider: 'google', options: {} });
+    const idToken = 'idToken' in res.result ? res.result.idToken : null;
+    if (!idToken) throw new ApiError(0, 'google_failed');
+    const r = await this.api.call<{ token: string; user: AccountUser }>('POST', '/api/auth/google', { idToken });
+    this.api.token = r.token;
+    await Preferences.set({ key: TOKEN_KEY, value: r.token });
+    await this.setUser(r.user);
+    return r.user;
+  }
+
   async logout() {
+    if (this.googleReady) SocialLogin.logout({ provider: 'google' }).catch(() => {});
     try {
       await this.api.call('POST', '/api/auth/logout');
     } catch {

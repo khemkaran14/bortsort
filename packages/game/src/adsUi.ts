@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { view } from './view';
 import type { HouseAd } from '@bolt-sort/services';
 import { app } from './app';
 import { text } from './ui';
@@ -27,7 +28,7 @@ function loadAdImage(scene: Phaser.Scene, ad: HouseAd): Promise<string | null> {
 export async function showInterstitial(scene: Phaser.Scene, ad: HouseAd): Promise<void> {
   const key = await loadAdImage(scene, ad);
   if (!key || !scene.sys.isActive()) return;
-  const { width, height } = scene.scale;
+  const { width, height } = view(scene);
   return new Promise((resolve) => {
     const layer = scene.add.container(0, 0).setDepth(5000);
     layer.add(scene.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.92).setInteractive());

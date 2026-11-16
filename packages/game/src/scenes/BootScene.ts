@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { view } from '../view';
 import { App as CapApp } from '@capacitor/app';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { app } from '../app';
@@ -12,7 +13,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   create() {
-    const { width, height } = this.scale;
+    const { width, height } = view(this);
     text(this, width / 2, height / 2, 'Bolt Sort', 56, '#f3d28a');
     void this.start();
   }

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { view } from '../view';
 import type { TextKey } from '@bolt-sort/services';
 import { app } from '../app';
 import { NUT_COLORS, UI, shade } from '../theme';
@@ -12,7 +13,7 @@ export class GameSelectScene extends Phaser.Scene {
   }
 
   create() {
-    const { width, height } = this.scale;
+    const { width, height } = view(this);
     background(this, 30);
     this.events.on('back', () => {});
     text(this, width / 2, 80, app.t('game.choose'), 42);

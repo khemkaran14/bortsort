@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { RES, view } from '../view';
 import { app } from '../app';
 import { UI } from '../theme';
 import { background, button, text } from '../ui';
@@ -10,7 +11,7 @@ export class BlueprintScene extends Phaser.Scene {
   }
 
   create() {
-    const { width, height } = this.scale;
+    const { width, height } = view(this);
     background(this, 20);
     this.events.on('back', () => this.scene.start('Modes'));
     const count = app.blueprintCount;
@@ -56,7 +57,7 @@ export class BlueprintScene extends Phaser.Scene {
     this.input.on('pointerdown', () => (this.moved = 0));
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
       if (!p.isDown) return;
-      const dy = p.position.y - p.prevPosition.y;
+      const dy = (p.position.y - p.prevPosition.y) / RES;
       this.moved += Math.abs(dy);
       scroll = Phaser.Math.Clamp(scroll - dy, 0, maxScroll);
       content.y = -scroll;

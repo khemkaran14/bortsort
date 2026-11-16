@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { view } from '../view';
 import { MODE_UNLOCK, type PlayMode } from '@bolt-sort/core';
 import { todayLocal, type TextKey } from '@bolt-sort/services';
 import { app } from '../app';
@@ -21,7 +22,7 @@ export class ModesScene extends Phaser.Scene {
   }
 
   create() {
-    const { width, height } = this.scale;
+    const { width, height } = view(this);
     background(this, 0);
     this.events.on('back', () => this.scene.start('Map'));
     button(this, 60, 56, 84, 72, '‹', () => this.scene.start('Map'), UI.grey, 40);

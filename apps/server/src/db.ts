@@ -84,6 +84,11 @@ const MIGRATIONS: string[] = [
   CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
   CREATE TABLE admin_sessions (token_hash TEXT PRIMARY KEY, expires_at INTEGER NOT NULL);
   `,
+  // 2: Sign in with Google
+  `
+  ALTER TABLE users ADD COLUMN google_sub TEXT;
+  CREATE UNIQUE INDEX users_google ON users(google_sub);
+  `,
 ];
 
 function migrate(db: DB) {

@@ -14,6 +14,7 @@ export interface User {
   last_seen_at: number;
   blocked: number;
   progress: string | null;
+  google_sub: string | null;
 }
 
 /** Find or create the user for a verified phone/email and start a session. Returns the token. */
@@ -33,6 +34,46 @@ export function login(db: DB, channel: 'phone' | 'email', dest: string): { token
     now() + SESSION_DAYS * 86_400_000,
   );
   return { token, user };
+}
+
+function startSession(db: DB, userId: number): string {
+  const token = randomBytes(32).toString('base64url');
+  db.prepare('INSERT INTO sessions (token_hash, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)').run(
+    sha(token),
+    userId,
+    now(),
+    now() + SESSION_DAYS * 86_400_000,
+  );
+  return token;
+}
+
+export interface GoogleIdentity {
+  sub: string;
+  email: string | null;
+  emailVerified: boolean;
+  name: string | null;
+}
+
+/**
+ * Sign in with Google. Finds the user by Google id; otherwise links to an existing account with the
+ * same *verified* email; otherwise creates a new account.
+ */
+export function loginGoogle(db: DB, g: GoogleIdentity): { token: string; user: User } | { blocked: true } {
+  let user = db.prepare('SELECT * FROM users WHERE google_sub = ?').get(g.sub) as User | undefined;
+  const email = g.email && g.emailVerified ? g.email.toLowerCase() : null;
+  if (!user && email) {
+    user = db.prepare('SELECT * FROM users WHERE email = ?').get(email) as User | undefined;
+    if (user) db.prepare('UPDATE users SET google_sub = ? WHERE id = ?').run(g.sub, user.id);
+  }
+  if (!user) {
+    const t = now();
+    const info = db
+      .prepare('INSERT INTO users (google_sub, email, name, created_at, last_seen_at) VALUES (?, ?, ?, ?, ?)')
+      .run(g.sub, email, g.name?.slice(0, 40) ?? null, t, t);
+    user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid) as User;
+  }
+  if (user.blocked) return { blocked: true };
+  return { token: startSession(db, user.id), user };
 }
 
 export function userForToken(db: DB, token: string | undefined): User | null {

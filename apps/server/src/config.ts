@@ -21,6 +21,8 @@ export interface Config {
   /** Origins allowed to call the API from a browser (the app runs on capacitor/localhost origins). */
   corsOrigins: string[];
   production: boolean;
+  /** OAuth client ids whose Google ID tokens we accept (web, Android and iOS clients). Empty = Google login off. */
+  googleClientIds: string[];
 }
 
 export function loadConfig(env = process.env): Config {
@@ -59,6 +61,10 @@ export function loadConfig(env = process.env): Config {
       .map((s) => s.trim())
       .filter(Boolean),
     production,
+    googleClientIds: (env.GOOGLE_CLIENT_IDS ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
   };
   if (production) {
     const problems: string[] = [];

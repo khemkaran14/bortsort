@@ -1,6 +1,7 @@
 import express, { type Request } from 'express';
 import { adSettings, imageUrl, liveAds, recordClick, recordImpression, type Ad } from './ads';
-import { bearer, login, logout, optionalUser, requireUser } from './auth';
+import { bearer, login, loginGoogle, logout, optionalUser, requireUser } from './auth';
+import type { GoogleVerifier } from './google';
 import type { Config } from './config';
 import { now, type DB } from './db';
 import { issueOtp, normalizeEmail, normalizePhone, verifyOtp, type Channel } from './otp';
@@ -24,7 +25,7 @@ function limiter(max: number, windowMs: number) {
 
 const ipOf = (req: Request) => req.ip ?? 'unknown';
 
-export function apiRouter(db: DB, cfg: Config, sender: Sender) {
+export function apiRouter(db: DB, cfg: Config, sender: Sender, verifyGoogle: GoogleVerifier) {
   const r = express.Router();
   r.use(express.json({ limit: '20kb' }));
   r.use(optionalUser(db));
@@ -74,6 +75,22 @@ export function apiRouter(db: DB, cfg: Config, sender: Sender) {
     const { token, user } = login(db, p.channel, p.dest);
     res.json({ token, user: publicUser(db, user.id) });
   });
+
+  // ---- Sign in with Google: the app sends Google's ID token; we verify it ourselves ----
+  const googleLimit = limiter(30, 60_000);
+  r.post('/auth/google', async (req, res) => {
+    if (!googleLimit(ipOf(req))) return res.status(429).json({ error: 'too_many' });
+    const idToken = req.body?.idToken;
+    if (typeof idToken !== 'string' || idToken.length > 4096) return res.status(400).json({ error: 'invalid' });
+    const g = await verifyGoogle(idToken);
+    if (!g) return res.status(401).json({ error: 'invalid' });
+    const r2 = loginGoogle(db, g);
+    if ('blocked' in r2) return res.status(403).json({ error: 'blocked' });
+    res.json({ token: r2.token, user: publicUser(db, r2.user.id) });
+  });
+
+  /** Lets the app know which login options to show. */
+  r.get('/auth/options', (_req, res) => res.json({ phone: true, email: true, google: cfg.googleClientIds.length > 0 }));
 
   r.post('/auth/logout', requireUser, (req, res) => {
     logout(db, bearer(req)!);

@@ -1,8 +1,9 @@
 import Phaser from 'phaser';
+import { view } from '../view';
 import { BOOSTERS } from '@bolt-sort/core';
 import type { TextKey } from '@bolt-sort/services';
 import { app } from '../app';
-import { makeMiscTextures, makeNutTextures } from '../textures';
+import { makeMiscTextures, makeNutPreview, makeNutTextures, tone } from '../textures';
 import { NUT_COLORS, SKINS, UI, type BoltSkin, type NutSkin } from '../theme';
 import { background, button, coinChip, text, toast } from '../ui';
 
@@ -13,7 +14,7 @@ export class ShopScene extends Phaser.Scene {
   }
 
   create() {
-    const { width } = this.scale;
+    const { width } = view(this);
     background(this, 1);
     this.events.on('back', () => this.scene.start('Map'));
     button(this, 60, 56, 84, 72, '‹', () => this.scene.start('Map'), UI.grey, 40);
@@ -104,31 +105,16 @@ export class ShopScene extends Phaser.Scene {
 
   private preview(kind: 'nut' | 'bolt', id: string, x: number, y: number) {
     if (kind === 'nut') {
-      // Temporary textures for the preview use the skin under a separate key prefix.
-      const key = `prev-${id}`;
-      if (!this.textures.exists(key + '-0')) {
-        const saved = app.data.skins.nut;
-        makeNutTextures(this, id as NutSkin);
-        for (const c of [0, 1, 2]) {
-          const src = this.textures.get(`nut-${c}`).getSourceImage() as HTMLCanvasElement;
-          this.textures.addCanvas(`${key}-${c}`, cloneCanvas(src));
-        }
-        makeNutTextures(this, saved as NutSkin);
-      }
-      [0, 1, 2].forEach((c, k) => this.add.image(x, y + 24 - k * 34, `${key}-${c}`).setDisplaySize(100, 38));
+      [0, 1, 2].forEach((c, k) => {
+        makeNutPreview(this, `prev-${id}-${c}`, c, id as NutSkin);
+        this.add.image(x, y + 24 - k * 34, `prev-${id}-${c}`).setDisplaySize(100, 42);
+      });
     } else {
-      const col = id === 'brass' ? 0xc9a24a : 0xaab4be;
-      this.add.rectangle(x, y, 16, 110, col);
-      this.add.rectangle(x, y + 58, 110, 16, col).setStrokeStyle(2, 0x333333);
-      this.add.image(x, y + 30, 'nut-' + (NUT_COLORS.length - 1)).setDisplaySize(90, 34);
+      const col = id === 'brass' ? 0xc9a24a : 0xb0bac4;
+      this.add.rectangle(x, y + 3, 18, 106, tone(col, -0.1));
+      this.add.rectangle(x - 3, y + 3, 5, 106, tone(col, 0.5));
+      this.add.rectangle(x, y + 60, 110, 16, tone(col, -0.25)).setStrokeStyle(2, tone(col, -0.55));
+      this.add.image(x, y + 30, 'nut-' + (NUT_COLORS.length - 1)).setDisplaySize(90, 38);
     }
   }
-}
-
-function cloneCanvas(src: HTMLCanvasElement | HTMLImageElement): HTMLCanvasElement {
-  const c = document.createElement('canvas');
-  c.width = src.width;
-  c.height = src.height;
-  c.getContext('2d')!.drawImage(src, 0, 0);
-  return c;
 }

@@ -244,6 +244,14 @@ No custom server at launch.
 - [ ] In-app subscription payment (Google Play Billing / App Store) feeding the same subscriptions table
 - [ ] Update the privacy policy and store data-safety forms (phone/email are now collected)
 
+### Update 4 – Google sign-in and new look
+
+- [x] Sign in with Google (verified on the server; links to an email account only if Google verified it)
+- [x] Sharp rendering at the phone's real resolution; Baloo 2 font (English + Hindi)
+- [x] Redrawn art: glossy nuts in every skin, metal bolts, gold caps, coins, stars, map spheres,
+      glossy 9-slice buttons, glass panels, lit backgrounds with vignette, glowing sparkles, fades
+- [ ] Create the Google OAuth clients (web, Android SHA-1, iOS) and set the ids
+
 ### Phase 6 – Monetization and promotion (after launch)
 
 - [ ] Ads and in-app purchases (separate plan)

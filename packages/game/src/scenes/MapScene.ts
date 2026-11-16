@@ -1,8 +1,10 @@
 import Phaser from 'phaser';
+import { HD, RES, hd, view } from '../view';
+import { nodeTexture } from '../textures';
 import { CHEST_STARS } from '@bolt-sort/core';
 import { checkIn, todayLocal } from '@bolt-sort/services';
 import { app } from '../app';
-import { STAGE_LOOKS, UI, hex, shade } from '../theme';
+import { STAGE_LOOKS, UI, hex } from '../theme';
 import { background, button, coinChip, dim, panel, text, toast } from '../ui';
 
 const COLS = 5;
@@ -30,7 +32,7 @@ export class MapScene extends Phaser.Scene {
   }
 
   create() {
-    const { width, height } = this.scale;
+    const { width, height } = view(this);
     this.bands = [];
     this.velocity = 0;
     const current = app.data.unlocked;
@@ -65,7 +67,7 @@ export class MapScene extends Phaser.Scene {
     });
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
       if (!this.dragging || !p.isDown) return;
-      const dy = p.position.y - p.prevPosition.y;
+      const dy = (p.position.y - p.prevPosition.y) / RES;
       this.dragMoved += Math.abs(dy);
       this.scrollY = Phaser.Math.Clamp(this.scrollY - dy, 0, this.maxScroll);
       this.velocity = -dy;
@@ -94,7 +96,7 @@ export class MapScene extends Phaser.Scene {
 
   private applyScroll() {
     this.content.y = -this.scrollY;
-    const { height } = this.scale;
+    const { height } = view(this);
     // Build stage bands lazily as they come into view (keeps 500 levels light on low-end phones).
     for (const b of this.bands) {
       const visible = b.y + b.h > this.scrollY - 400 && b.y < this.scrollY + height + 400;
@@ -110,14 +112,14 @@ export class MapScene extends Phaser.Scene {
     const row = Math.floor(i / COLS);
     let col = i % COLS;
     if (row % 2 === 1) col = COLS - 1 - col; // snake path
-    const w = this.scale.width;
+    const w = view(this).width;
     const x = 90 + col * ((w - 180) / (COLS - 1));
     return { x, y: band.y + HEADER_H + row * ROW_H + ROW_H / 2 };
   }
 
   private buildBand(b: (typeof this.bands)[number]) {
     b.built = true;
-    const { width } = this.scale;
+    const { width } = view(this);
     const c = this.add.container(0, 0);
     this.content.add(c);
     b.container = c;
@@ -151,7 +153,7 @@ export class MapScene extends Phaser.Scene {
     const opened = app.data.chestsOpened.includes(b.stage);
     const chest = this.add
       .image(width / 2 - 90, chestY, 'chest')
-      .setScale(1.1)
+      .setScale(1.1 / HD)
       .setAlpha(opened ? 0.45 : 1);
     c.add(chest);
     const label = opened ? '✓' : stars >= CHEST_STARS ? app.t('chest.open') : app.t('chest.need', { n: stars });
@@ -165,7 +167,7 @@ export class MapScene extends Phaser.Scene {
       const lockG = this.add.graphics();
       lockG.fillStyle(0x000000, 0.45).fillRoundedRect(20, b.y + 20, width - 40, b.h - 40, 36);
       c.add(lockG);
-      c.add(this.add.image(width / 2, b.y + 260, 'lock').setScale(1.6));
+      c.add(hd(this.add.image(width / 2, b.y + 260, 'lock'), 1.6));
       c.add(text(this, width / 2, b.y + 340, app.t('locked'), 30, UI.textDim));
     }
   }
@@ -183,21 +185,22 @@ export class MapScene extends Phaser.Scene {
     const c = this.add.container(x, y);
     const look = STAGE_LOOKS[meta.stage];
     const col = !unlocked ? 0x4a5560 : boss ? 0xc0392b : hard ? 0xe67e22 : current ? look.accent : 0x3d8bf2;
-    const g = this.add.graphics();
-    g.fillStyle(shade(col, -0.45), 1).fillCircle(0, 6, r);
-    g.fillStyle(col, 1).fillCircle(0, 0, r);
-    g.fillStyle(0xffffff, 0.2).fillCircle(-r * 0.25, -r * 0.3, r * 0.45);
-    c.add(g);
+    c.add(
+      this.add
+        .image(0, 0, nodeTexture(this, col))
+        .setOrigin(0.5, 48 / 104)
+        .setScale(r / 44 / HD),
+    );
     if (unlocked) c.add(text(this, 0, -2, String(id), id > 99 ? 26 : 30, current ? '#1d2b3a' : '#ffffff'));
-    else c.add(this.add.image(0, 0, 'lock').setScale(0.55));
+    else c.add(hd(this.add.image(0, 0, 'lock'), 0.55));
     if (boss) c.add(text(this, 0, -r - 14, 'BOSS', 18, '#ffd166'));
     if (stars > 0) {
       for (let k = 0; k < 3; k++) {
         c.add(
           this.add
             .image(-26 + k * 26, r + 6, 'star')
-            .setScale(0.38)
-            .setTint(k < stars ? 0xf3c14b : 0x2b3540),
+            .setScale(0.4 / HD)
+            .setTint(k < stars ? 0xffffff : 0x3a4654),
         );
       }
     }
@@ -215,7 +218,7 @@ export class MapScene extends Phaser.Scene {
   }
 
   private header() {
-    const { width } = this.scale;
+    const { width } = view(this);
     const bar = this.add.graphics().setScrollFactor(0).setDepth(10);
     bar.fillStyle(0x0f1923, 0.92).fillRect(0, 0, width, 120);
     button(this, 46, 60, 72, 72, '⌂', () => this.scene.start('GameSelect'), UI.grey, 34)
@@ -280,7 +283,7 @@ export class MapScene extends Phaser.Scene {
       lang: app.data.settings.language,
     });
 
-    const { width, height } = this.scale;
+    const { width, height } = view(this);
     const layer = this.add.container(0, 0).setDepth(100).setScrollFactor(0);
     layer.add(dim(this));
     layer.add(panel(this, width / 2, height / 2, 600, 560));

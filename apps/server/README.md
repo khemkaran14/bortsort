@@ -43,6 +43,25 @@ provider is set. To make the game use the local server for login and ads, put
 
 Back up `apps/server/data/` (database and ad images) every day.
 
+## Sign in with Google
+
+1. [Google Cloud Console](https://console.cloud.google.com/apis/credentials) → create a project →
+   **OAuth consent screen** (app name, support email) → **Credentials → Create OAuth client ID**:
+   - **Web application** (this is the main one; add your dev URL `http://localhost:5173` under
+     _Authorized JavaScript origins_ for browser testing).
+   - **Android**: package `com.divyrs.boltsort` + the **SHA-1** of your signing key
+     (debug: `cd apps/mobile/android && ./gradlew signingReport`; for Play Store builds also add the
+     _App signing key_ SHA-1 from Play Console → App integrity).
+   - **iOS** (only for iPhone builds): bundle id `com.divyrs.boltsort`; then add its _reversed client
+     id_ as a URL scheme in `apps/mobile/ios/App/App/Info.plist`.
+2. Server `.env`: `GOOGLE_CLIENT_IDS=<web client id>,<ios client id>`.
+3. App `packages/game/.env`: `VITE_GOOGLE_WEB_CLIENT_ID=<web client id>` (and
+   `VITE_GOOGLE_IOS_CLIENT_ID=<ios client id>`), then rebuild the app.
+
+The app shows **Continue with Google** only when `VITE_GOOGLE_WEB_CLIENT_ID` is set. The server checks
+every Google token's signature, expiry and audience before logging in; a Google account is linked to an
+existing email account only when Google says the email is verified.
+
 ## Phone login in India
 
 SMS OTPs to Indian numbers must use a DLT-registered sender and template (TRAI rules). MSG91 (or

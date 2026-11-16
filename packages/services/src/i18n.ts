@@ -153,6 +153,9 @@ const en = {
   'account.premium': '{p} until {d}',
   'account.guest': 'Playing as guest',
   'ad.label': 'Ad',
+  'login.google': 'Continue with Google',
+  'login.or': 'or',
+  'login.err.google_failed': 'Google sign-in was cancelled or failed.',
 } as const;
 
 export type TextKey = keyof typeof en;
@@ -311,6 +314,9 @@ const hi: Record<TextKey, string> = {
   'account.premium': '{p}, {d} तक',
   'account.guest': 'मेहमान के रूप में खेल रहे हैं',
   'ad.label': 'विज्ञापन',
+  'login.google': 'Google से जारी रखें',
+  'login.or': 'या',
+  'login.err.google_failed': 'Google साइन-इन रद्द हुआ या विफल रहा।',
 };
 
 const tables = { en, hi } as const;

@@ -3,10 +3,16 @@ import type { Config } from './config';
 import type { DB } from './db';
 import { adminRouter } from './admin';
 import { DELETE_PAGE } from './deletePage';
+import { googleVerifier, type GoogleVerifier } from './google';
 import { apiRouter, clickRedirect } from './api';
 import type { Sender } from './senders';
 
-export function createApp(db: DB, cfg: Config, sender: Sender) {
+export function createApp(
+  db: DB,
+  cfg: Config,
+  sender: Sender,
+  verifyGoogle: GoogleVerifier = googleVerifier(cfg.googleClientIds),
+) {
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', 'loopback'); // behind nginx on the same machine
@@ -28,7 +34,7 @@ export function createApp(db: DB, cfg: Config, sender: Sender) {
 
   app.get('/health', (_req, res) => res.json({ ok: true }));
   app.get('/delete-account', (_req, res) => res.type('html').send(DELETE_PAGE));
-  app.use('/api', apiRouter(db, cfg, sender));
+  app.use('/api', apiRouter(db, cfg, sender, verifyGoogle));
   app.get('/r/:id', clickRedirect(db));
   app.use(
     '/uploads',

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { view } from '../view';
 import { ApiError, type TextKey } from '@bolt-sort/services';
 import { app } from '../app';
 import { UI } from '../theme';
@@ -32,7 +33,7 @@ export class LoginScene extends Phaser.Scene {
   }
 
   create() {
-    const { width } = this.scale;
+    const { width } = view(this);
     background(this, 30);
     this.events.on('back', () => this.leave());
     button(this, 60, 56, 84, 72, '‹', () => this.leave(), UI.grey, 40);
@@ -61,7 +62,7 @@ export class LoginScene extends Phaser.Scene {
 
   private enterStep() {
     this.clear();
-    const { width, height } = this.scale;
+    const { width, height } = view(this);
     const tab = (x: number, ch: Channel) =>
       button(
         this,
@@ -111,6 +112,25 @@ export class LoginScene extends Phaser.Scene {
     this.layer.add(
       button(this, width / 2, 530, 420, 96, app.t('login.send'), () => void this.send(read()), UI.green, 32),
     );
+    // Sign in with Google (when a Google client id is configured for this build).
+    const googleId = import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID;
+    if (googleId) {
+      this.layer.add(text(this, width / 2, 640, '— ' + app.t('login.or') + ' —', 24, UI.textDim));
+      const g = button(
+        this,
+        width / 2,
+        730,
+        420,
+        90,
+        '      ' + app.t('login.google'),
+        () => void this.google(),
+        0xffffff,
+        26,
+      );
+      (g.list[1] as Phaser.GameObjects.Text).setColor('#1f1f1f');
+      g.add(this.googleMark(-165, 0));
+      this.layer.add(g);
+    }
     this.layer.add(
       button(this, width / 2, height - 120, 420, 80, app.t('login.guest'), () => this.leave(), UI.grey, 24),
     );
@@ -133,7 +153,7 @@ export class LoginScene extends Phaser.Scene {
 
   private codeStep() {
     this.clear();
-    const { width, height } = this.scale;
+    const { width, height } = view(this);
     this.layer.add(text(this, width / 2, 290, app.t('login.sentTo', { d: this.dest }), 26, '#ffffff', false));
     const code = this.field(width / 2, 400, 360, {
       type: 'text',
@@ -198,8 +218,46 @@ export class LoginScene extends Phaser.Scene {
     }
   }
 
+  private async google() {
+    if (this.busy) return;
+    this.busy = true;
+    try {
+      await app.account.googleLogin({
+        webClientId: import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID!,
+        iOSClientId: import.meta.env.VITE_GOOGLE_IOS_CLIENT_ID || undefined,
+      });
+      toast(this, app.t('login.ok'));
+      await app.houseAds.load('bolt');
+      await app.houseAds.load('wit');
+      app.syncProgress();
+      this.time.delayedCall(700, () => this.leave());
+    } catch (e) {
+      this.error(e instanceof ApiError ? e : new ApiError(-1, 'google_failed'));
+    } finally {
+      this.busy = false;
+    }
+  }
+
+  /** The multicolor "G" mark, drawn in code. */
+  private googleMark(x: number, y: number) {
+    const g = this.add.graphics({ x, y });
+    const r = 20;
+    const seg = (from: number, to: number, color: number) => {
+      g.lineStyle(9, color, 1).beginPath();
+      g.arc(0, 0, r, Phaser.Math.DegToRad(from), Phaser.Math.DegToRad(to), false);
+      g.strokePath();
+    };
+    seg(-40, 45, 0x4285f4);
+    seg(45, 135, 0x34a853);
+    seg(135, 215, 0xfbbc05);
+    seg(215, 320, 0xea4335);
+    g.fillStyle(0x4285f4, 1).fillRect(0, -4.5, r + 4.5, 9);
+    return g;
+  }
+
   private error(e: unknown) {
-    const code = e instanceof ApiError ? (e.status === 0 ? 'network' : e.code) : 'network';
+    const code =
+      e instanceof ApiError ? (e.status === 0 && e.code !== 'google_failed' ? 'network' : e.code) : 'network';
     const key = `login.err.${code}` as TextKey;
     toast(this, app.t(key) === key ? app.t('login.err.network') : app.t(key));
   }

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { view } from '../view';
 import { app } from '../app';
 import { UI } from '../theme';
 import { background, button, confirm, panel, text, toast } from '../ui';
@@ -16,7 +17,7 @@ export class AccountScene extends Phaser.Scene {
   }
 
   create() {
-    const { width } = this.scale;
+    const { width } = view(this);
     background(this, 1);
     this.events.on('back', () => this.scene.start(this.from));
     button(this, 60, 56, 84, 72, '‹', () => this.scene.start(this.from), UI.grey, 40);
@@ -82,7 +83,7 @@ export class AccountScene extends Phaser.Scene {
   private statusText: Phaser.GameObjects.Text | null = null;
 
   private status() {
-    const { width } = this.scale;
+    const { width } = view(this);
     const sub = app.account.user?.subscription;
     const msg =
       sub && app.account.adFree

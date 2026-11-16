@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { HD, hd, view } from '../view';
 import { app } from '../app';
 import { showInterstitial } from '../adsUi';
 import { NUT_COLORS, UI, shade } from '../theme';
@@ -54,7 +55,7 @@ export class WitLevelScene extends Phaser.Scene {
   }
 
   create() {
-    const { width, height } = this.scale;
+    const { width, height } = view(this);
     background(this, 30);
     app.audio.startMusic(7);
     this.A = {
@@ -95,7 +96,7 @@ export class WitLevelScene extends Phaser.Scene {
 
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
       if (this.overlay || !this.anyTap) return;
-      if (p.y > this.A.top - 20 && p.y < this.A.bottom + 20) this.anyTap();
+      if (p.worldY > this.A.top - 20 && p.worldY < this.A.bottom + 20) this.anyTap();
     });
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => this.onMove(p));
     this.input.on('pointerup', () => this.onUp());
@@ -153,7 +154,7 @@ export class WitLevelScene extends Phaser.Scene {
   // ---------- question ----------
 
   private questionWords() {
-    const { width } = this.scale;
+    const { width } = view(this);
     const q = this.L(this.level.q);
     // `glue`: no space before this token in the source (e.g. "dot{dot:.}" or "{exit:exit}!").
     const tokens: { s: string; id?: string; glue: boolean }[] = [];
@@ -231,18 +232,18 @@ export class WitLevelScene extends Phaser.Scene {
   private onDown(o: WitObj, p: Phaser.Input.Pointer) {
     if (this.overlay || this.solved) return;
     app.audio.unlock();
-    this.active = { o, sx: p.x, sy: p.y, ox: o.go.x, oy: o.go.y, depth: o.go.depth, dragging: false };
+    this.active = { o, sx: p.worldX, sy: p.worldY, ox: o.go.x, oy: o.go.y, depth: o.go.depth, dragging: false };
   }
 
   private onMove(p: Phaser.Input.Pointer) {
     const a = this.active;
     if (!a || !a.o.drag || !p.isDown) return;
-    if (!a.dragging && Phaser.Math.Distance.Between(p.x, p.y, a.sx, a.sy) > 12) {
+    if (!a.dragging && Phaser.Math.Distance.Between(p.worldX, p.worldY, a.sx, a.sy) > 12) {
       a.dragging = true;
       a.o.go.setDepth(900);
       app.audio.lift();
     }
-    if (a.dragging) a.o.go.setPosition(a.ox + p.x - a.sx, a.oy + p.y - a.sy);
+    if (a.dragging) a.o.go.setPosition(a.ox + p.worldX - a.sx, a.oy + p.worldY - a.sy);
   }
 
   private onUp() {
@@ -495,7 +496,7 @@ export class WitLevelScene extends Phaser.Scene {
   }
 
   private popup(icon: string, body: string, next = false) {
-    const { width, height } = this.scale;
+    const { width, height } = view(this);
     const o = this.add.container(0, 0).setDepth(2000);
     this.overlay = o;
     o.add(dim(this));
@@ -527,7 +528,7 @@ export class WitLevelScene extends Phaser.Scene {
   }
 
   private result(first: boolean) {
-    const { width, height } = this.scale;
+    const { width, height } = view(this);
     const o = this.add.container(0, 0).setDepth(2000);
     this.overlay = o;
     o.add(dim(this, 0.55));
@@ -538,7 +539,7 @@ export class WitLevelScene extends Phaser.Scene {
     );
     o.add(text(this, width / 2, height / 2 - 20, this.L(this.level.why), 27, '#ffffff', false).setWordWrapWidth(540));
     if (first) {
-      o.add(this.add.image(width / 2 - 70, height / 2 + 90, 'coin'));
+      o.add(hd(this.add.image(width / 2 - 70, height / 2 + 90, 'coin')));
       o.add(text(this, width / 2 + 30, height / 2 + 90, app.t('win.coins', { n: WIT_COINS }), 32, '#f3c14b'));
     }
     const last = this.n >= WIT_LEVELS.length;
@@ -565,10 +566,11 @@ export class WitLevelScene extends Phaser.Scene {
   }
 
   private confetti() {
-    const { width } = this.scale;
+    const { width } = view(this);
     for (let k = 0; k < 50; k++) {
       const c = this.add
         .image(Phaser.Math.Between(0, width), -20, 'confetti')
+        .setScale(1 / HD)
         .setTint(NUT_COLORS[k % NUT_COLORS.length])
         .setDepth(1500);
       this.tweens.add({
@@ -594,7 +596,7 @@ export class WitLevelScene extends Phaser.Scene {
     const canvas = this.game.canvas;
     const send = (type: string, x: number, y: number) => {
       const r = canvas.getBoundingClientRect();
-      const k = r.width / this.scale.width;
+      const k = r.width / view(this).width;
       const ev = new MouseEvent(type, {
         clientX: r.left + x * k,
         clientY: r.top + y * k,

@@ -1,18 +1,23 @@
 import Phaser from 'phaser';
+import { HD, RES, hd, view } from './view';
+import { BTN, PANEL, buttonTexture, css, panelTexture, tone } from './textures';
 import { app } from './app';
-import { STAGE_LOOKS, UI, shade } from './theme';
+import { STAGE_LOOKS, UI, type StageLook } from './theme';
 
 export function text(scene: Phaser.Scene, x: number, y: number, s: string, size = 28, color = UI.text, bold = true) {
-  return scene.add
+  const t = scene.add
     .text(x, y, s, {
       fontFamily: UI.font,
       fontSize: `${size}px`,
       color,
-      fontStyle: bold ? 'bold' : 'normal',
+      fontStyle: bold ? '700' : '500',
       align: 'center',
     })
     .setOrigin(0.5)
     .setPadding(2, 6, 2, 6);
+  // A soft shadow gives bold text depth on every background.
+  if (bold) t.setShadow(0, Math.max(1, size / 14), 'rgba(0,0,0,0.38)', Math.max(2, size / 9), false, true);
+  return t;
 }
 
 export interface Button extends Phaser.GameObjects.Container {
@@ -21,7 +26,7 @@ export interface Button extends Phaser.GameObjects.Container {
   setBadge(s: string | null): void;
 }
 
-/** Rounded button with press feedback, a tap sound and an optional count badge. */
+/** Glossy rounded button (9-slice art) with press feedback, a tap sound and an optional badge. */
 export function button(
   scene: Phaser.Scene,
   x: number,
@@ -34,21 +39,29 @@ export function button(
   size = 26,
 ): Button {
   const c = scene.add.container(x, y) as Button;
-  const g = scene.add.graphics();
-  const draw = (col: number) => {
-    g.clear();
-    g.fillStyle(shade(col, -0.45), 1).fillRoundedRect(-w / 2, -h / 2 + 5, w, h, 16);
-    g.fillStyle(col, 1).fillRoundedRect(-w / 2, -h / 2, w, h, 16);
-    g.fillStyle(0xffffff, 0.18).fillRoundedRect(-w / 2 + 6, -h / 2 + 4, w - 12, h * 0.32, 10);
-  };
-  draw(color);
-  const t = text(scene, 0, -1, label, size);
+  const key = buttonTexture(scene, color);
+  const bg = scene.add
+    .nineslice(
+      0,
+      BTN.lip / 2,
+      key,
+      undefined,
+      w * HD,
+      (h + BTN.lip) * HD,
+      BTN.slice * HD,
+      BTN.slice * HD,
+      BTN.slice * HD,
+      BTN.sliceBottom * HD,
+    )
+    .setScale(1 / HD);
+  const light = color === 0xffffff || color === UI.gold;
+  const t = text(scene, 0, -2, label, size, light ? '#1d2b3a' : UI.text);
   const badgeBg = scene.add
     .circle(w / 2 - 8, -h / 2 + 6, 17, UI.red)
     .setStrokeStyle(3, 0xffffff)
     .setVisible(false);
   const badgeTx = text(scene, w / 2 - 8, -h / 2 + 6, '', 18).setVisible(false);
-  c.add([g, t, badgeBg, badgeTx]);
+  c.add([bg, t, badgeBg, badgeTx]);
   c.setSize(w, h);
   let enabled = true;
   c.setInteractive({ useHandCursor: true });
@@ -65,8 +78,9 @@ export function button(
   c.setLabel = (s: string) => t.setText(s);
   c.setEnabled = (on: boolean) => {
     enabled = on;
-    draw(on ? color : UI.grey);
-    c.setAlpha(on ? 1 : 0.7);
+    if (on) bg.clearTint();
+    else bg.setTint(0x8a96a3);
+    c.setAlpha(on ? 1 : 0.75);
   };
   c.setBadge = (s: string | null) => {
     badgeBg.setVisible(!!s);
@@ -75,109 +89,205 @@ export function button(
   return c;
 }
 
+/** Glass panel with a soft drop shadow (9-slice art). */
 export function panel(scene: Phaser.Scene, x: number, y: number, w: number, h: number, color: number = UI.panel) {
-  const g = scene.add.graphics();
-  g.fillStyle(0x000000, 0.35).fillRoundedRect(x - w / 2 + 4, y - h / 2 + 8, w, h, 28);
-  g.fillStyle(color, 1).fillRoundedRect(x - w / 2, y - h / 2, w, h, 28);
-  g.lineStyle(4, shade(color, 0.25), 1).strokeRoundedRect(x - w / 2, y - h / 2, w, h, 28);
-  return g;
+  const key = panelTexture(scene, color);
+  const M = PANEL.margin;
+  return scene.add
+    .nineslice(
+      x,
+      y,
+      key,
+      undefined,
+      (w + 2 * M) * HD,
+      (h + 2 * M) * HD,
+      PANEL.slice * HD,
+      PANEL.slice * HD,
+      PANEL.slice * HD,
+      PANEL.slice * HD,
+    )
+    .setScale(1 / HD);
 }
 
 /** Dark full-screen layer that swallows taps; used under dialogs. */
 export function dim(scene: Phaser.Scene, alpha = 0.6) {
-  const { width, height } = scene.scale;
-  return scene.add.rectangle(width / 2, height / 2, width, height, 0x000000, alpha).setInteractive();
+  const { width, height } = view(scene);
+  return scene.add.rectangle(width / 2, height / 2, width, height, 0x05080c, alpha).setInteractive();
 }
 
-/** Stage background: vertical gradient plus faint themed shapes. */
+/**
+ * Stage background, painted once per stage into a texture: gradient, soft light from above,
+ * blurred bokeh, faint themed shapes and a vignette.
+ */
 export function background(scene: Phaser.Scene, stage: number) {
-  const { width, height } = scene.scale;
+  const { width, height } = view(scene);
   const look = STAGE_LOOKS[stage] ?? STAGE_LOOKS[1];
-  const g = scene.add.graphics();
-  const steps = 32;
-  for (let i = 0; i < steps; i++) {
-    const c = Phaser.Display.Color.Interpolate.ColorWithColor(
-      Phaser.Display.Color.ValueToColor(look.top),
-      Phaser.Display.Color.ValueToColor(look.bottom),
-      steps - 1,
-      i,
-    );
-    g.fillStyle(Phaser.Display.Color.GetColor(c.r, c.g, c.b), 1);
-    g.fillRect(0, (height / steps) * i, width, height / steps + 1);
+  const scale = Math.min(RES, 1.25); // soft art: no need for full resolution
+  const key = `bg-${stage}-${Math.round(height)}-${scale}`;
+  if (!scene.textures.exists(key)) {
+    const cv = document.createElement('canvas');
+    cv.width = Math.ceil(width * scale);
+    cv.height = Math.ceil(height * scale);
+    const ctx = cv.getContext('2d')!;
+    ctx.scale(scale, scale);
+    paintBackground(ctx, width, height, look, stage);
+    scene.textures.addCanvas(key, cv);
   }
+  return scene.add
+    .image(0, 0, key)
+    .setOrigin(0)
+    .setScale(1 / scale);
+}
+
+function paintBackground(ctx: CanvasRenderingContext2D, width: number, height: number, look: StageLook, stage: number) {
+  const g = ctx.createLinearGradient(0, 0, 0, height);
+  g.addColorStop(0, css(tone(look.top, 0.08)));
+  g.addColorStop(0.55, css(look.top));
+  g.addColorStop(1, css(look.bottom));
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, width, height);
+  // Light from above
+  const glow = ctx.createRadialGradient(width / 2, height * 0.12, 10, width / 2, height * 0.12, height * 0.6);
+  glow.addColorStop(0, css(look.accent, 0.22));
+  glow.addColorStop(1, css(look.accent, 0));
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, width, height);
   const rng = new Phaser.Math.RandomDataGenerator([String(stage)]);
-  g.lineStyle(4, look.accent, 0.07);
-  g.fillStyle(look.accent, 0.05);
-  for (let k = 0; k < 14; k++) {
+  // Bokeh
+  for (let k = 0; k < 18; k++) {
     const x = rng.between(0, width);
     const y = rng.between(0, height);
-    const r = rng.between(20, 90);
+    const r = rng.between(20, 110);
+    const b = ctx.createRadialGradient(x, y, 0, x, y, r);
+    b.addColorStop(0, css(look.accent, rng.realInRange(0.04, 0.1)));
+    b.addColorStop(1, css(look.accent, 0));
+    ctx.fillStyle = b;
+    ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+  // Faint themed shapes
+  ctx.strokeStyle = css(look.accent, 0.08);
+  ctx.fillStyle = css(look.accent, 0.06);
+  ctx.lineWidth = 4;
+  for (let k = 0; k < 12; k++) {
+    const x = rng.between(0, width);
+    const y = rng.between(0, height);
+    const r = rng.between(24, 90);
+    ctx.beginPath();
     switch (look.deco) {
       case 'gears':
       case 'mix':
-        g.strokeCircle(x, y, r);
-        for (let t = 0; t < 8; t++) {
-          const a = (t / 8) * Math.PI * 2;
-          g.fillRect(x + Math.cos(a) * r - 6, y + Math.sin(a) * r - 6, 12, 12);
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.stroke();
+        for (let t = 0; t < 10; t++) {
+          const a = (t / 10) * Math.PI * 2;
+          ctx.fillRect(x + Math.cos(a) * (r + 6) - 6, y + Math.sin(a) * (r + 6) - 6, 12, 12);
         }
+        ctx.beginPath();
+        ctx.arc(x, y, r * 0.35, 0, Math.PI * 2);
+        ctx.stroke();
         break;
       case 'spokes':
-        g.strokeCircle(x, y, r);
+        ctx.arc(x, y, r, 0, Math.PI * 2);
         for (let t = 0; t < 6; t++) {
           const a = (t / 6) * Math.PI;
-          g.lineBetween(x - Math.cos(a) * r, y - Math.sin(a) * r, x + Math.cos(a) * r, y + Math.sin(a) * r);
+          ctx.moveTo(x - Math.cos(a) * r, y - Math.sin(a) * r);
+          ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r);
         }
+        ctx.stroke();
         break;
       case 'clock':
-        g.strokeCircle(x, y, r);
-        g.lineBetween(x, y, x, y - r * 0.7);
-        g.lineBetween(x, y, x + r * 0.5, y);
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.moveTo(x, y);
+        ctx.lineTo(x, y - r * 0.7);
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + r * 0.5, y);
+        ctx.stroke();
         break;
       case 'waves':
-        g.beginPath();
-        for (let t = 0; t <= 20; t++) g.lineTo(x - 100 + t * 10, y + Math.sin(t) * 8);
-        g.strokePath();
+        for (let t = 0; t <= 24; t++) ctx.lineTo(x - 120 + t * 10, y + Math.sin(t * 0.8) * 10);
+        ctx.stroke();
         break;
       case 'rails':
-        g.lineBetween(0, y, width, y);
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.moveTo(0, y + 24);
+        ctx.lineTo(width, y + 24);
+        ctx.stroke();
         break;
       case 'bolts':
-        g.fillTriangle(x, y - r, x - r / 3, y, x + r / 4, y);
-        g.fillTriangle(x + r / 4, y - r / 5, x - r / 4, y + r, x + r / 2, y - r / 5);
+        ctx.moveTo(x, y - r);
+        ctx.lineTo(x - r / 3, y);
+        ctx.lineTo(x + r / 6, y);
+        ctx.lineTo(x - r / 6, y + r);
+        ctx.lineTo(x + r / 2, y - r / 5);
+        ctx.lineTo(x, y - r / 5);
+        ctx.closePath();
+        ctx.fill();
         break;
       case 'stars':
-        g.fillCircle(x, y, rng.between(1, 4));
+        for (let t = 0; t < 6; t++) {
+          const sx = rng.between(0, width);
+          const sy = rng.between(0, height);
+          const sr = rng.realInRange(0.8, 2.6);
+          ctx.fillStyle = `rgba(255,255,255,${rng.realInRange(0.25, 0.7)})`;
+          ctx.beginPath();
+          ctx.arc(sx, sy, sr, 0, Math.PI * 2);
+          ctx.fill();
+        }
         break;
       case 'circuits':
-        g.lineBetween(x, y, x + r, y);
-        g.lineBetween(x + r, y, x + r, y + r);
-        g.strokeCircle(x + r, y + r, 6);
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + r, y);
+        ctx.lineTo(x + r, y + r);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(x + r, y + r, 6, 0, Math.PI * 2);
+        ctx.stroke();
         break;
       case 'bubbles':
-        g.strokeCircle(x, y, r / 3);
+        ctx.arc(x, y, r / 3, 0, Math.PI * 2);
+        ctx.stroke();
         break;
       case 'grid':
         if (k === 0) {
-          g.lineStyle(1, look.accent, 0.12);
-          for (let gx = 0; gx < width; gx += 40) g.lineBetween(gx, 0, gx, height);
-          for (let gy = 0; gy < height; gy += 40) g.lineBetween(0, gy, width, gy);
-          g.lineStyle(4, look.accent, 0.07);
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = css(look.accent, 0.1);
+          for (let gx = 0; gx < width; gx += 40) {
+            ctx.moveTo(gx, 0);
+            ctx.lineTo(gx, height);
+          }
+          for (let gy = 0; gy < height; gy += 40) {
+            ctx.moveTo(0, gy);
+            ctx.lineTo(width, gy);
+          }
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = css(look.accent, 0.08);
         }
-        g.strokeRect(x, y, r, r * 0.6);
+        ctx.strokeRect(x, y, r, r * 0.6);
         break;
       case 'speed':
-        g.lineBetween(x, y, x + r * 2, y);
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + r * 2.5, y);
+        ctx.stroke();
         break;
       case 'leaves':
-        g.fillEllipse(x, y, r * 0.5, r * 0.25);
+        ctx.ellipse(x, y, r * 0.5, r * 0.22, rng.realInRange(0, 3), 0, Math.PI * 2);
+        ctx.fill();
         break;
     }
   }
-  return g;
+  // Vignette
+  const v = ctx.createRadialGradient(width / 2, height / 2, height * 0.28, width / 2, height / 2, height * 0.78);
+  v.addColorStop(0, 'rgba(0,0,0,0)');
+  v.addColorStop(1, 'rgba(0,0,0,0.5)');
+  ctx.fillStyle = v;
+  ctx.fillRect(0, 0, width, height);
 }
 
 export function toast(scene: Phaser.Scene, msg: string, y?: number) {
-  const { width, height } = scene.scale;
+  const { width, height } = view(scene);
   const t = text(scene, width / 2, y ?? height * 0.42, msg, 30).setDepth(1000);
   const bg = scene.add
     .rectangle(width / 2, t.y, Math.min(width - 40, t.width + 50), t.height + 24, 0x000000, 0.75)
@@ -199,7 +309,7 @@ export function coinChip(scene: Phaser.Scene, x: number, y: number) {
   const c = scene.add.container(x, y);
   const bg = scene.add.graphics();
   bg.fillStyle(0x000000, 0.35).fillRoundedRect(-80, -24, 160, 48, 24);
-  const icon = scene.add.image(-56, 0, 'coin').setScale(0.9);
+  const icon = hd(scene.add.image(-56, 0, 'coin'), 0.9);
   const t = text(scene, 14, 0, String(app.data.coins), 26);
   c.add([bg, icon, t]);
   return { container: c, refresh: () => t.setText(String(app.data.coins)) };
@@ -207,7 +317,7 @@ export function coinChip(scene: Phaser.Scene, x: number, y: number) {
 
 /** Simple yes/no dialog. */
 export function confirm(scene: Phaser.Scene, title: string, body: string, yes: string, onYes: () => void) {
-  const { width, height } = scene.scale;
+  const { width, height } = view(scene);
   const layer = scene.add.container(0, 0).setDepth(2000);
   const close = () => layer.destroy();
   layer.add(dim(scene));
