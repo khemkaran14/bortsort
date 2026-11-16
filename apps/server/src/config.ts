@@ -69,7 +69,12 @@ export function loadConfig(env = process.env): Config {
     if (cfg.admin.password && cfg.admin.password.length < 12) problems.push('ADMIN_PASSWORD (12+ characters)');
     if (cfg.sms.provider === 'console') problems.push('SMS_PROVIDER (msg91 or twilio)');
     if (!cfg.publicUrl.startsWith('https://')) problems.push('PUBLIC_URL (https)');
-    if (problems.length) throw new Error('Missing or unsafe settings for production: ' + problems.join(', '));
+    if (problems.length)
+      throw new Error(
+        'NODE_ENV=production needs these settings in apps/server/.env: ' +
+          problems.join(', ') +
+          '. For testing on your own computer, remove the NODE_ENV=production line.',
+      );
   }
   return cfg;
 }
