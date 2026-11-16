@@ -10,6 +10,8 @@ import { BlueprintScene } from './scenes/BlueprintScene';
 import { GameSelectScene } from './scenes/GameSelectScene';
 import { WitMapScene } from './scenes/WitMapScene';
 import { WitLevelScene } from './scenes/WitLevelScene';
+import { LoginScene } from './scenes/LoginScene';
+import { AccountScene } from './scenes/AccountScene';
 
 /** Portrait game, 720 wide; height follows the screen's shape so every phone is filled. */
 function gameHeight() {
@@ -29,6 +31,10 @@ const game = new Phaser.Game({
   render: { antialias: true, roundPixels: false },
   fps: { target: 60 },
   input: { activePointers: 2 },
+  // Text boxes on the login screen are real HTML inputs (keyboard, autofill of one-time codes).
+  dom: { createContainer: true },
+  // Ad images come from the server.
+  loader: { crossOrigin: 'anonymous' },
   scene: [
     BootScene,
     MapScene,
@@ -41,6 +47,8 @@ const game = new Phaser.Game({
     GameSelectScene,
     WitMapScene,
     WitLevelScene,
+    LoginScene,
+    AccountScene,
   ],
 });
 

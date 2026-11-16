@@ -233,6 +233,17 @@ No custom server at launch.
 - [x] 50 original puzzles in English and Hindi, all auto-played in a browser test
 - [ ] Hand-play all 50 on a phone and tune hints and difficulty order
 
+### Update 3 – Accounts, admin and house ads
+
+- [x] Optional login with a one-time code by phone (SMS) or email; account screen with log out and delete
+- [x] Server (`apps/server`) with admin panel: dashboard, users, progress, subscriptions (give/extend/cancel), block
+- [x] House ads: full-screen (close ✕ after the seconds the admin sets) and banner; tap opens the advertiser's page via a click-counting redirect
+- [x] Ad settings: on/off, frequency, first level, banners; subscribers never see ads
+- [x] Web page to delete an account (Google Play requirement)
+- [ ] Deploy the server (https) and set `VITE_API_URL`; SMS provider with DLT template; SMTP
+- [ ] In-app subscription payment (Google Play Billing / App Store) feeding the same subscriptions table
+- [ ] Update the privacy policy and store data-safety forms (phone/email are now collected)
+
 ### Phase 6 – Monetization and promotion (after launch)
 
 - [ ] Ads and in-app purchases (separate plan)

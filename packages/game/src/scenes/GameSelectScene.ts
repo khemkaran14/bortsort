@@ -16,8 +16,26 @@ export class GameSelectScene extends Phaser.Scene {
     background(this, 30);
     this.events.on('back', () => {});
     text(this, width / 2, 80, app.t('game.choose'), 42);
-    coinChip(this, width / 2, 150);
+    coinChip(this, app.api.enabled ? width - 130 : width / 2, 150);
     button(this, width - 60, 70, 84, 72, '⚙', () => this.scene.start('Settings', { from: 'GameSelect' }), UI.grey, 30);
+    // Account: login is optional; offered once on the first launch.
+    if (app.api.enabled) {
+      const acc = app.account;
+      button(
+        this,
+        130,
+        150,
+        220,
+        64,
+        acc.loggedIn ? '👤 ' + acc.label.slice(-6) : '👤 ' + app.t('account.login'),
+        () => this.scene.start(acc.loggedIn ? 'Account' : 'Login', { from: 'GameSelect' }),
+        acc.loggedIn ? UI.panelLight : UI.blue,
+        22,
+      );
+      if (!acc.loggedIn && !app.data.loginPrompted) {
+        this.time.delayedCall(300, () => this.scene.start('Login', { from: 'GameSelect' }));
+      }
+    }
 
     const h = Math.min(420, (height - 260) / 2 - 30);
     const top = 210;

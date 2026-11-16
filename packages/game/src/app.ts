@@ -11,6 +11,9 @@ import {
   t as translate,
   type AdsService,
   type StoreService,
+  AccountService,
+  ApiClient,
+  HouseAds,
   type TextKey,
 } from '@bolt-sort/services';
 
@@ -30,6 +33,10 @@ class AppContext {
   store: StoreService = new NoStore();
   remote = new RemoteConfigService();
   notifications = new NotificationService();
+  /** Server for login, subscriptions and ads. Set VITE_API_URL at build time; empty = offline only. */
+  api = new ApiClient((import.meta.env.VITE_API_URL ?? '').replace(/\/$/, ''));
+  account = new AccountService(this.api);
+  houseAds = new HouseAds(this.api, () => this.account.adFree);
   index: StageIndex = { version: 1, stages: [] };
   private stages = new Map<number, StageFile>();
   private blueprints: StageFile | null = null;
@@ -49,6 +56,9 @@ class AppContext {
     const res = await fetch('levels/index.json');
     this.index = await res.json();
     await this.remote.refresh();
+    await this.account.init();
+    void this.houseAds.load('bolt');
+    void this.houseAds.load('wit');
     this.save.data.stats.sessions++;
     void this.save.save();
   }
@@ -105,6 +115,15 @@ class AppContext {
 
   totalStars(): number {
     return Object.values(this.data.stars).reduce((a, b) => a + b, 0);
+  }
+
+  /** Tell the server how far the player is (only when logged in; throttled). */
+  syncProgress() {
+    this.account.syncProgress({
+      boltLevel: this.data.unlocked,
+      witSolved: Object.keys(this.data.wit.solved).length,
+      coins: this.data.coins,
+    });
   }
 
   addCoins(n: number, source: string) {

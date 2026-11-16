@@ -7,11 +7,13 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   {
     // Browser test scripts: Node + page code (run with plain node, not bundled).
-    files: ['tools/e2e/**/*.cjs'],
+    files: ['tools/e2e/**/*.cjs', 'apps/server/deploy/*.cjs'],
     languageOptions: {
       sourceType: 'commonjs',
       globals: {
         require: 'readonly',
+        module: 'writable',
+        __dirname: 'readonly',
         process: 'readonly',
         console: 'readonly',
         window: 'readonly',

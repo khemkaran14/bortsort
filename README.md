@@ -12,13 +12,16 @@ objects, move the words of the question itself, crack riddles, cross the river, 
 
 Plus login streaks, stage chests, boosters and cosmetic skins. English and Hindi. Works offline.
 
+Optional login by phone or email code, subscriptions (ad-free) and your own ads, all managed from an
+admin panel: see [`apps/server/README.md`](apps/server/README.md).
+
 _"Bolt Sort" and "Wit Twist" are working titles. Check the final names and icons for trademark clashes before launch._
 
 ## Quick start
 
 ```bash
 npm install
-npm test            # 63 tests: rules, every mechanic, solver, generator, saves, shipped levels
+npm test            # 80 tests: rules, every mechanic, solver, generator, saves, shipped levels
 npm run dev         # play in the browser at http://localhost:5173
 ```
 

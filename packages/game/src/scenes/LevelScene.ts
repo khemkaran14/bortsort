@@ -28,6 +28,7 @@ import {
 import type { TextKey } from '@bolt-sort/services';
 import { app } from '../app';
 import { NUT_COLORS, UI } from '../theme';
+import { showBanner, showInterstitial } from '../adsUi';
 import { background, button, coinChip, confirm, dim, panel, text, toast, type Button } from '../ui';
 
 interface LevelData {
@@ -593,8 +594,10 @@ export class LevelScene extends Phaser.Scene {
         this.revealBtn = button(this, x, y, w, 86, app.t('btn.reveal'), () => this.useReveal(), 0xf28c28, 22);
       if (it === 'skip') this.skipBtn = button(this, x, y, w, 86, app.t('btn.skip'), () => this.skip(), 0xf28c28, 22);
     });
-    // Reserved banner area (empty until ads are added).
+    // Reserved banner area: a house ad when one is running (never for subscribers).
     this.add.rectangle(width / 2, height - BANNER_H / 2, width, BANNER_H, 0x000000, 0.12);
+    const banner = app.houseAds.banner('bolt');
+    if (banner) void showBanner(this, banner, width / 2, height - BANNER_H / 2, width - 20, BANNER_H - 10);
   }
 
   private stageForRules() {
@@ -982,6 +985,7 @@ export class LevelScene extends Phaser.Scene {
       if (lvl.id >= 3) d.tutorialDone = true;
     }
     app.addCoins(coins, this.mode);
+    app.syncProgress();
     void app.save.save();
     app.levelsWonThisSession++;
     app.analytics.log({
@@ -1060,7 +1064,11 @@ export class LevelScene extends Phaser.Scene {
       );
     } else if (this.mode === 'blueprint') {
       const hasNext = this.level.id < app.blueprintCount;
-      const go = (data: LevelData | null) => (data ? this.scene.restart(data) : this.scene.start('Blueprint'));
+      const go = async (data: LevelData | null) => {
+        await this.breakAd();
+        if (data) this.scene.restart(data);
+        else this.scene.start('Blueprint');
+      };
       o.add(
         button(
           this,
@@ -1133,10 +1141,14 @@ export class LevelScene extends Phaser.Scene {
     this.coins.refresh();
   }
 
-  private next() {
-    const n = app.remote.values.interstitialEveryNLevels;
-    // Break point: an interstitial ad could appear here later (Remote Config controls frequency).
-    if (n > 0 && app.levelsWonThisSession % n === 0) void app.ads.showInterstitial('after_level');
+  /** Break point after a win: a full-screen house ad when the admin's frequency says so. */
+  private async breakAd() {
+    const ad = app.houseAds.afterWin('bolt', app.data.unlocked);
+    if (ad) await showInterstitial(this, ad);
+  }
+
+  private async next() {
+    await this.breakAd();
     if (this.level.id < app.totalLevels) this.scene.restart({ id: this.level.id + 1 });
     else this.scene.start('Map');
   }

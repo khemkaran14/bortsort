@@ -14,3 +14,6 @@ apps/mobile/ios/App/build/
 apps/mobile/ios/DerivedData/
 *.keystore
 *.jks
+apps/server/data/
+apps/server/.env
+packages/game/.env

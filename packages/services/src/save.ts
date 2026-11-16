@@ -35,9 +35,11 @@ export interface SaveData {
   wit: { unlocked: number; solved: Record<number, boolean>; freeHints: number; hinted: Record<number, boolean> };
   /** Game shown first on the chooser. */
   lastGame: 'bolt' | 'wit';
+  /** The optional login screen was offered once (since save v4). */
+  loginPrompted: boolean;
 }
 
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 const KEY = 'bolt-sort.save';
 
 export function defaultSave(): SaveData {
@@ -69,6 +71,7 @@ export function defaultSave(): SaveData {
     zen: { solved: 0 },
     wit: { unlocked: 1, solved: {}, freeHints: 3, hinted: {} },
     lastGame: 'bolt',
+    loginPrompted: false,
   };
 }
 
@@ -77,7 +80,7 @@ export function migrate(raw: unknown): SaveData {
   const base = defaultSave();
   if (!raw || typeof raw !== 'object') return base;
   const r = raw as Partial<SaveData>;
-  // v2 added blueprint / rush / zen, v3 added wit / lastGame; missing fields come from the defaults.
+  // v2 added blueprint / rush / zen, v3 added wit / lastGame, v4 loginPrompted; missing fields come from the defaults.
   return {
     ...base,
     ...r,

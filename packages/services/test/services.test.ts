@@ -8,7 +8,8 @@ describe('save data', () => {
     expect(s.coins).toBe(500);
     expect(s.settings.music).toBe(false);
     expect(s.settings.sfx).toBe(true);
-    expect(s.version).toBe(3);
+    expect(s.version).toBe(4);
+    expect(s.loginPrompted).toBe(false);
     expect(s.wit.unlocked).toBe(1);
     expect(s.wit.freeHints).toBe(3);
     expect(s.blueprint.unlocked).toBe(1);

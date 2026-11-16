@@ -1,0 +1,27 @@
+{
+  "name": "@bolt-sort/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Bolt Sort backend: OTP login, accounts, subscriptions, house ads and the admin panel",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.4.1",
+    "cookie-parser": "^1.4.7",
+    "express": "^4.21.2",
+    "multer": "^2.0.2",
+    "nodemailer": "^7.0.10",
+    "tsx": "^4.20.6"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/cookie-parser": "^1.4.9",
+    "@types/express": "^4.17.23",
+    "@types/multer": "^2.0.0",
+    "@types/nodemailer": "^7.0.3"
+  }
+}

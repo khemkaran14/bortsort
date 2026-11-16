@@ -23,6 +23,10 @@ TypeScript · Phaser 3 · Vite · Capacitor 8 (Android + iOS) · Vitest · ESLin
   Puzzle text lives in `levels.ts` as `{ en, hi }` pairs; screen chrome text uses `t()`.
 - `tools/e2e/wit-playthrough.cjs` — plays all 50 Wit Twist puzzles in a browser via their `solve()`.
 - `tools/level-gen` — CLI that builds `stage-XX.json` (`npm run levels`), and `check` to re-verify.
+- `apps/server` — backend (Express + SQLite): OTP login (phone/email), accounts, subscriptions, house ads
+  with click redirect `/r/:id`, admin panel `/admin`, `/delete-account`. See `apps/server/README.md`.
+  The app talks to it through `ApiClient`/`AccountService`/`HouseAds` in `packages/services`;
+  `VITE_API_URL` (in `packages/game/.env`) sets the address; empty = offline build, no login or ads.
 - `apps/mobile` — Capacitor project (`android/`, `ios/`). Web assets come from `packages/game/dist`.
 
 ## Game rules (same in engine, solver and hints)

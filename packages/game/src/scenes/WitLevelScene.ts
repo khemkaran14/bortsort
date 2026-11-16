@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { app } from '../app';
+import { showInterstitial } from '../adsUi';
 import { NUT_COLORS, UI, shade } from '../theme';
 import { background, button, coinChip, confirm, dim, panel, text, toast } from '../ui';
 import { WIT_LEVELS } from '../wit/levels';
@@ -363,6 +364,7 @@ export class WitLevelScene extends Phaser.Scene {
     d.solved[this.n] = true;
     d.unlocked = Math.max(d.unlocked, Math.min(this.n + 1, WIT_LEVELS.length));
     if (first) app.addCoins(WIT_COINS, 'wit');
+    app.syncProgress();
     void app.save.save();
     app.analytics.log({ name: 'wit_solved', level: this.n, hinted: !!d.hinted[this.n] });
     app.audio.win();
@@ -555,7 +557,9 @@ export class WitLevelScene extends Phaser.Scene {
     );
   }
 
-  private goNext() {
+  private async goNext() {
+    const ad = this.solved ? app.houseAds.afterWin('wit', this.n) : null;
+    if (ad) await showInterstitial(this, ad);
     if (this.n >= WIT_LEVELS.length) this.sceneManager().start('WitMap');
     else this.sceneManager().restart({ n: this.n + 1 });
   }

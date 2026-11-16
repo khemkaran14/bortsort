@@ -9,12 +9,13 @@
     "packages/services",
     "packages/game",
     "tools/level-gen",
-    "apps/mobile"
+    "apps/mobile",
+    "apps/server"
   ],
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc -p packages/core && tsc -p packages/services && tsc -p packages/game && tsc -p tools/level-gen",
+    "typecheck": "tsc -p packages/core && tsc -p packages/services && tsc -p packages/game && tsc -p tools/level-gen && tsc -p apps/server",
     "lint": "eslint .",
     "format": "prettier --write .",
     "levels": "tsx tools/level-gen/src/cli.ts",
@@ -22,7 +23,8 @@
     "build": "npm run build -w @bolt-sort/game",
     "mobile:sync": "npm run build && npm run sync -w @bolt-sort/mobile",
     "android": "npm run mobile:sync && npm run open:android -w @bolt-sort/mobile",
-    "ios": "npm run mobile:sync && npm run open:ios -w @bolt-sort/mobile"
+    "ios": "npm run mobile:sync && npm run open:ios -w @bolt-sort/mobile",
+    "server": "npm run dev -w @bolt-sort/server"
   },
   "engines": {
     "node": ">=20.19"

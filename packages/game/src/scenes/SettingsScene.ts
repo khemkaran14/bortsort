@@ -68,10 +68,30 @@ export class SettingsScene extends Phaser.Scene {
     button(this, width - 240, ly, 110, 60, 'EN', () => this.lang('en'), s.language === 'en' ? UI.blue : UI.grey, 22);
     button(this, width - 110, ly, 120, 60, 'हिंदी', () => this.lang('hi'), s.language === 'hi' ? UI.blue : UI.grey, 22);
 
+    // Account (login, subscription, delete account).
+    if (app.api.enabled) {
+      const ay = ly + 100;
+      const g2 = this.add.graphics();
+      g2.fillStyle(UI.panelLight, 0.9).fillRoundedRect(30, ay - 40, width - 60, 80, 18);
+      text(this, 60, ay, app.t('account.title'), 26).setOrigin(0, 0.5);
+      const label = app.account.loggedIn ? app.account.label : app.t('account.login');
+      button(
+        this,
+        width - 160,
+        ay,
+        240,
+        60,
+        label,
+        () => this.scene.start(app.account.loggedIn ? 'Account' : 'Login', { from: 'Settings' }),
+        UI.blue,
+        20,
+      );
+    }
+
     button(
       this,
       width / 2,
-      ly + 140,
+      ly + (app.api.enabled ? 230 : 140),
       360,
       80,
       app.t('settings.reset'),
