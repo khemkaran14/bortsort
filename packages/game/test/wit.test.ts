@@ -4,8 +4,10 @@ import { WIT_LEVELS } from '../src/wit/levels';
 const ids = (s: string) => [...s.matchAll(/\{(\w+):[^}]*\}/g)].map((m) => m[1]).sort();
 
 describe('Wit Twist puzzles', () => {
-  it('has 50 puzzles', () => {
-    expect(WIT_LEVELS).toHaveLength(50);
+  it('has 100 puzzles, with puzzles for kids, everyone and engineers', () => {
+    expect(WIT_LEVELS).toHaveLength(100);
+    const tags = WIT_LEVELS.slice(50).map((l) => l.tag);
+    for (const t of ['kids', 'all', 'eng']) expect(tags.filter((x) => x === t).length).toBeGreaterThanOrEqual(12);
   });
 
   it('every puzzle has question, hint and explanation in English and Hindi', () => {

@@ -93,6 +93,8 @@ export interface SolveApi {
 }
 
 export interface WitLevel {
+  /** Who it is aimed at (shown as a badge). Default: everyone. */
+  tag?: 'kids' | 'all' | 'eng';
   /** Question. Use {id:text} to make a word the player can tap or drag. */
   q: L;
   hint: L;

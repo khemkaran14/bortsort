@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { HD, hd, view } from '../view';
+import type { TextKey } from '@bolt-sort/services';
 import { app } from '../app';
 import { showInterstitial } from '../adsUi';
 import { NUT_COLORS, UI, shade } from '../theme';
@@ -71,7 +72,17 @@ export class WitLevelScene extends Phaser.Scene {
     const bar = this.add.graphics();
     bar.fillStyle(0x000000, 0.3).fillRect(0, 0, width, 110);
     button(this, 60, 56, 84, 72, '‹', () => this.sceneManager().start('WitMap'), UI.grey, 40);
-    text(this, width / 2, 56, app.t('wit.level', { n: this.n }), 36);
+    text(this, width / 2, 46, app.t('wit.level', { n: this.n }), 34);
+    // Audience badge: kids / everyone / engineers.
+    const tag = this.level.tag ?? 'all';
+    const tagColor = { kids: 0x2fae63, all: 0x3d8bf2, eng: 0xf28c28 }[tag];
+    const tagLabel = app.t(`wit.tag.${tag}` as TextKey);
+    const tagW = 26 + tagLabel.length * 11;
+    this.add
+      .graphics()
+      .fillStyle(tagColor, 1)
+      .fillRoundedRect(width / 2 - tagW / 2, 76, tagW, 28, 14);
+    text(this, width / 2, 90, tagLabel, 17);
     coinChip(this, width - 110, 56);
 
     this.ctx = this.makeCtx();

@@ -6,7 +6,7 @@ import { UI } from '../theme';
 import { WIT_LEVELS } from '../wit/levels';
 import { background, button, coinChip, text } from '../ui';
 
-/** Wit Twist level picker: 50 puzzles, each opens after the one before. */
+/** Wit Twist level picker: 100 puzzles, each opens after the one before. */
 export class WitMapScene extends Phaser.Scene {
   private moved = 0;
 

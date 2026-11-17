@@ -156,6 +156,9 @@ const en = {
   'login.google': 'Continue with Google',
   'login.or': 'or',
   'login.err.google_failed': 'Google sign-in was cancelled or failed.',
+  'wit.tag.kids': '🧒 Kids',
+  'wit.tag.all': '🌍 Everyone',
+  'wit.tag.eng': '⚙️ Engineers',
 } as const;
 
 export type TextKey = keyof typeof en;
@@ -317,6 +320,9 @@ const hi: Record<TextKey, string> = {
   'login.google': 'Google से जारी रखें',
   'login.or': 'या',
   'login.err.google_failed': 'Google साइन-इन रद्द हुआ या विफल रहा।',
+  'wit.tag.kids': '🧒 बच्चे',
+  'wit.tag.all': '🌍 सबके लिए',
+  'wit.tag.eng': '⚙️ इंजीनियर',
 };
 
 const tables = { en, hi } as const;

@@ -119,7 +119,7 @@ riddles in our own words; no levels, art or characters are taken from any other 
   star”; move the hole to the ball; fox-chick-corn river crossing; 3 L / 5 L jugs; lights-out grid.
 - **Help:** 3 free hints, then 25 coins each; skip a puzzle for 60 coins. +10 coins per first solve.
 - **Languages:** every question, hint and explanation in English and Hindi.
-- **Testing:** every level has a scripted solution; `tools/e2e/wit-playthrough.cjs` plays all 50
+- **Testing:** every level has a scripted solution; `tools/e2e/wit-playthrough.cjs` plays all 100
   with real touch events in a browser (both languages pass).
 - **Code:** `packages/game/src/wit/` (levels and toolkit), scenes `GameSelect`, `WitMap`, `WitLevel`.
 - **Next:** 25 new puzzles per monthly update; a daily trick puzzle; a "Wit Twist" store listing of
@@ -231,7 +231,13 @@ No custom server at launch.
 - [x] Game chooser at launch; shared coins and settings
 - [x] Puzzle toolkit (tap, drag, question words, keypad, choices, sequences, waiting)
 - [x] 50 original puzzles in English and Hindi, all auto-played in a browser test
-- [ ] Hand-play all 50 on a phone and tune hints and difficulty order
+- [ ] Hand-play all 100 on a phone and tune hints and difficulty order
+
+### Update 5 – Wit Twist 51–100
+
+- [x] 50 more puzzles, mixed for kids (animals, colours, shadows), everyone (riddles, lateral thinking)
+      and engineers (logic gates, gears, binary/hex, code, Ohm's law, pipes, fewest swaps); badge per puzzle
+- [x] Finale (100) calls back to puzzle 10: flip the 6 to make 991
 
 ### Update 3 – Accounts, admin and house ads
 

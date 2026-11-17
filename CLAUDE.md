@@ -1,7 +1,7 @@
 # Bolt Sort — notes for Claude Code
 
 Two games in one Android/iOS app, picked on a game chooser: **Bolt Sort** (calm color-sort puzzle: move
-colored nuts between bolts until every bolt holds one color) and **Wit Twist** (50 trick puzzles). Full design: `docs/GAME_PLAN.md`. Work one phase at a time and tick its boxes there.
+colored nuts between bolts until every bolt holds one color) and **Wit Twist** (100 trick puzzles). Full design: `docs/GAME_PLAN.md`. Work one phase at a time and tick its boxes there.
 
 ## Stack
 
@@ -18,10 +18,11 @@ TypeScript · Phaser 3 · Vite · Capacitor 8 (Android + iOS) · Vitest · ESLin
 - `packages/game` — Phaser scenes: Boot, Map, Level (runs every mode: stage, daily, blueprint, rush,
   zen), Modes (hub), Blueprint (level picker), Daily, Shop, Settings. `public/levels/*.json` are
   generated; do not hand-edit.
-- `packages/game/src/wit` — Wit Twist: `levels.ts` (50 puzzles, each with en+hi text, `build()` and a
+- `packages/game/src/wit` — Wit Twist: `levels.ts` (1–50) and `levels2.ts` (51–100), each with en+hi text, a `tag`
+  (kids / all / eng badge), `build()` and a
   scripted `solve()`), `types.ts` (the toolkit API levels use). Scenes: GameSelect, WitMap, WitLevel.
   Puzzle text lives in `levels.ts` as `{ en, hi }` pairs; screen chrome text uses `t()`.
-- `tools/e2e/wit-playthrough.cjs` — plays all 50 Wit Twist puzzles in a browser via their `solve()`.
+- `tools/e2e/wit-playthrough.cjs` — plays every Wit Twist puzzle in a browser via their `solve()`.
 - `tools/level-gen` — CLI that builds `stage-XX.json` (`npm run levels`), and `check` to re-verify.
 - `apps/server` — backend (Express + SQLite): OTP login (phone/email), Sign in with Google, accounts, subscriptions, house ads
   with click redirect `/r/:id`, admin panel `/admin`, `/delete-account`. See `apps/server/README.md`.

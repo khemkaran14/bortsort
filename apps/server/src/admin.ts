@@ -199,7 +199,7 @@ export function adminRouter(db: DB, cfg: Config) {
     if (!p) return '—';
     try {
       const o = JSON.parse(p) as { boltLevel?: number; witSolved?: number; coins?: number };
-      return `Bolt lvl ${o.boltLevel ?? 0} · Wit ${o.witSolved ?? 0}/50 · ${o.coins ?? 0} coins`;
+      return `Bolt lvl ${o.boltLevel ?? 0} · Wit ${o.witSolved ?? 0}/100 · ${o.coins ?? 0} coins`;
     } catch {
       return '—';
     }

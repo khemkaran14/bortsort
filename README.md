@@ -7,7 +7,8 @@ bolt holds one color. 600 solver-checked levels in 12 themed stages, 10 special 
 plus Blueprint (copy the drawing), Rush Hour (2-minute timed run), Zen Garden (endless calm puzzles)
 and a Daily Challenge.
 
-**Wit Twist**: 50 original trick puzzles where the obvious answer is usually wrong. Tap and drag
+**Wit Twist**: 100 original trick puzzles for kids, everyone and engineers, where the obvious answer
+is usually wrong (logic circuits, gears, code, riddles, animals and more). Tap and drag
 objects, move the words of the question itself, crack riddles, cross the river, light the grid.
 
 Plus login streaks, stage chests, boosters and cosmetic skins. English and Hindi. Works offline.

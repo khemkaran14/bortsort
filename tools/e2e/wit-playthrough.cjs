@@ -1,5 +1,5 @@
 /**
- * Plays all 50 Wit Twist puzzles in a real browser, using each level's scripted solution and real
+ * Plays every Wit Twist puzzle in a real browser, using each level's scripted solution and real
  * mouse events on the canvas (so hit areas and covering objects are tested too).
  *
  *   npm run build && npx vite preview --port 4173 (in packages/game), then:
@@ -39,7 +39,9 @@ const shots = new Set((process.argv[4] || '').split(',').filter(Boolean).map(Num
   await p.waitForTimeout(2500);
   await p.screenshot({ path: out + '/00-select.png' });
   const fails = [];
-  for (let n = 1; n <= 50; n++) {
+  const total = Number(process.env.WIT_COUNT || 100);
+  const from = Number(process.env.WIT_FROM || 1);
+  for (let n = from; n <= total; n++) {
     await p.evaluate((n) => window.__game.scene.getScenes(true)[0].scene.start('WitLevel', { n }), n);
     await p.waitForTimeout(900);
     if (shots.has(n)) await p.screenshot({ path: out + `/l${String(n).padStart(2, '0')}.png` });

@@ -1,55 +1,16 @@
 import type Phaser from 'phaser';
-import type { L, WitCtx, WitLevel, WitObj } from './types';
+import type { L, WitLevel, WitObj } from './types';
+import { l, numberTile, sequence, WRONG } from './kit';
+import { MORE_LEVELS } from './levels2';
 
 /**
- * Wit Twist: 50 original trick puzzles. Some use old folk riddles (public domain), written in our
+ * Wit Twist: 100 original trick puzzles (1–50 here, 51–100 in levels2.ts). Some use old folk riddles (public domain), written in our
  * own words; every scene, setup and twist here is our own.
  *
  * Each level has a scripted `solve` that the automated test runs to prove it can be finished.
  */
 
-const l = (en: string, hi: string): L => ({ en, hi });
-
-const WRONG = {
-  look: l('Look closer…', 'ध्यान से देखो…'),
-  notThat: l('Not that one!', 'वो नहीं!'),
-  locked: l('Locked!', 'बंद है!'),
-};
-
-/** Tap objects in a fixed order; a mistake resets the order. */
-function sequence(c: WitCtx, names: string[], done: () => void) {
-  let next = 0;
-  const marks: Phaser.GameObjects.Text[] = [];
-  return (o: WitObj) => {
-    if (o.name === names[next]) {
-      next++;
-      const t = c.scene.add
-        .text(o.go.x, o.go.y - 60, String(next), {
-          fontFamily: 'system-ui, sans-serif',
-          fontSize: '30px',
-          color: '#7cf29c',
-          fontStyle: 'bold',
-        })
-        .setOrigin(0.5);
-      marks.push(t);
-      if (next === names.length) done();
-    } else {
-      next = 0;
-      marks.forEach((m) => m.destroy());
-      marks.length = 0;
-      c.wrong(l('Wrong order — start again.', 'गलत क्रम — फिर से शुरू करो।'));
-    }
-  };
-}
-
-/** Rounded box with a number, used by several levels. */
-function numberTile(g: Phaser.GameObjects.Graphics, w: number, h: number, color: number) {
-  g.fillStyle(0x000000, 0.3).fillRoundedRect(-w / 2 + 3, -h / 2 + 6, w, h, 16);
-  g.fillStyle(color, 1).fillRoundedRect(-w / 2, -h / 2, w, h, 16);
-  g.lineStyle(3, 0xffffff, 0.8).strokeRoundedRect(-w / 2, -h / 2, w, h, 16);
-}
-
-export const WIT_LEVELS: WitLevel[] = [
+const FIRST_LEVELS: WitLevel[] = [
   // 1
   {
     q: l('Tap the red ball.', 'लाल गेंद पर टैप करो।'),
@@ -1419,7 +1380,7 @@ export const WIT_LEVELS: WitLevel[] = [
   },
   // 50
   {
-    q: l('Last one! Tap the button to {finish:finish}.', 'आखिरी! {finish:खत्म} करने के लिए बटन दबाओ।'),
+    q: l('Halfway! Tap the button to {finish:finish}.', 'आधा सफ़र! {finish:खत्म} करने के लिए बटन दबाओ।'),
     hint: l('The button is too fast. Is there another “finish”?', 'बटन बहुत तेज़ है। कहीं और “खत्म” लिखा है?'),
     why: l(
       'You tapped “finish” in the question. You finished Wit Twist!',
@@ -1449,3 +1410,5 @@ export const WIT_LEVELS: WitLevel[] = [
     },
   },
 ];
+
+export const WIT_LEVELS: WitLevel[] = [...FIRST_LEVELS, ...MORE_LEVELS];
