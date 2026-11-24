@@ -300,6 +300,11 @@ describe('web account deletion page', () => {
     expect(r.status).toBe(200);
     expect(await r.text()).toContain('Delete your account');
   });
+  it('serves the privacy policy', async () => {
+    const r = await fetch(base + '/privacy');
+    expect(r.status).toBe(200);
+    expect(await r.text()).toContain('Privacy Policy');
+  });
 });
 
 describe('production settings', () => {

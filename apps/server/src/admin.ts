@@ -460,7 +460,7 @@ export function adminRouter(db: DB, cfg: Config) {
         <div>
           <label>Show in</label
           ><select name="games">
-            ${(['all', 'bolt', 'wit'] as const).map((g) => html`<option value="${g}" ${raw(a.games === g ? 'selected' : '')}>${g === 'all' ? 'Both games' : g === 'bolt' ? 'Bolt Sort' : 'Wit Twist'}</option>`)}
+            ${(['all', 'bolt', 'wit'] as const).map((g) => html`<option value="${g}" ${raw(a.games === g ? 'selected' : '')}>${g === 'all' ? 'Both games' : g === 'bolt' ? 'Nutwise' : 'Wit Twist'}</option>`)}
           </select>
         </div>
         <div>

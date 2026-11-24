@@ -1,10 +1,15 @@
 {
-  "appId": "com.divyrs.boltsort",
-  "appName": "Bolt Sort",
+  "appId": "com.divyrs.nutwise",
+  "appName": "Nutwise",
   "webDir": "../../packages/game/dist",
   "backgroundColor": "#1d2b3a",
-  "android": { "backgroundColor": "#1d2b3a" },
-  "ios": { "backgroundColor": "#1d2b3a", "contentInset": "never" },
+  "android": {
+    "backgroundColor": "#1d2b3a"
+  },
+  "ios": {
+    "backgroundColor": "#1d2b3a",
+    "contentInset": "never"
+  },
   "plugins": {
     "SplashScreen": {
       "launchShowDuration": 1500,
@@ -12,6 +17,16 @@
       "backgroundColor": "#1d2b3a",
       "showSpinner": false
     },
-    "LocalNotifications": { "iconColor": "#f3c14b" }
+    "LocalNotifications": {
+      "iconColor": "#f3c14b"
+    },
+    "SocialLogin": {
+      "providers": {
+        "google": true,
+        "facebook": false,
+        "apple": false,
+        "twitter": false
+      }
+    }
   }
 }

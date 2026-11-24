@@ -6,6 +6,6 @@ import { makeSender } from './senders';
 const cfg = loadConfig();
 const db = openDb(cfg.dbPath);
 createApp(db, cfg, makeSender(cfg)).listen(cfg.port, () => {
-  console.log(`Bolt Sort server on :${cfg.port} (${cfg.production ? 'production' : 'development'})`);
+  console.log(`Nutwise server on :${cfg.port} (${cfg.production ? 'production' : 'development'})`);
   if (!cfg.production) console.log(`Admin panel: http://localhost:${cfg.port}/admin`);
 });

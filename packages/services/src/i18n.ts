@@ -1,6 +1,6 @@
 /** All player-facing text. Add a language by adding a table with the same keys. */
 const en = {
-  'app.title': 'Bolt Sort',
+  'app.title': 'Nutwise',
   'menu.play': 'Play',
   'menu.daily': 'Daily',
   'menu.shop': 'Shop',
@@ -164,7 +164,7 @@ const en = {
 export type TextKey = keyof typeof en;
 
 const hi: Record<TextKey, string> = {
-  'app.title': 'बोल्ट सॉर्ट',
+  'app.title': 'नटवाइज़',
   'menu.play': 'खेलें',
   'menu.daily': 'रोज़ाना',
   'menu.shop': 'दुकान',

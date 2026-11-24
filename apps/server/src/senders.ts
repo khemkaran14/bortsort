@@ -45,7 +45,7 @@ export function makeSender(cfg: Config): Sender {
         const body = new URLSearchParams({
           To: phone,
           From: cfg.sms.twilioFrom,
-          Body: `${code} is your Bolt Sort login code. It expires in 5 minutes.`,
+          Body: `${code} is your Nutwise login code. It expires in 5 minutes.`,
         });
         const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${cfg.sms.twilioSid}/Messages.json`, {
           method: 'POST',
@@ -64,8 +64,8 @@ export function makeSender(cfg: Config): Sender {
       await transport.sendMail({
         from: cfg.smtp.from,
         to,
-        subject: `${code} is your Bolt Sort login code`,
-        text: `Your Bolt Sort login code is ${code}.\nIt expires in 5 minutes. If you did not ask for it, ignore this email.`,
+        subject: `${code} is your Nutwise login code`,
+        text: `Your Nutwise login code is ${code}.\nIt expires in 5 minutes. If you did not ask for it, ignore this email.`,
       });
     },
   };

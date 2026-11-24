@@ -1,4 +1,4 @@
-package com.divyrs.boltsort;
+package com.divyrs.nutwise;
 
 import com.getcapacitor.BridgeActivity;
 

@@ -106,7 +106,7 @@ export class SettingsScene extends Phaser.Scene {
       UI.red,
       24,
     );
-    text(this, width / 2, height - 60, 'Bolt Sort v0.1.0', 20, UI.textDim, false);
+    text(this, width / 2, height - 60, 'Nutwise v1.0.0', 20, UI.textDim, false);
   }
 
   private lang(l: 'en' | 'hi') {

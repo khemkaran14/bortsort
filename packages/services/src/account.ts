@@ -20,7 +20,7 @@ export class ApiError extends Error {
   }
 }
 
-/** Talks to the Bolt Sort server. With no server URL configured the game simply stays offline. */
+/** Talks to the Nutwise server. With no server URL configured the game simply stays offline. */
 export class ApiClient {
   token: string | null = null;
   constructor(readonly baseUrl: string) {}

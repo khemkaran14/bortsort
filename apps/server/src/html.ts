@@ -35,13 +35,13 @@ export function page(title: string, body: Raw, opts: { nav?: boolean; flash?: st
     opts.nav === false
       ? ''
       : html`<nav>
-          <strong>Bolt Sort admin</strong>
+          <strong>Nutwise admin</strong>
           <a href="/admin">Dashboard</a><a href="/admin/users">Users</a><a href="/admin/subscriptions">Subscriptions</a>
           <a href="/admin/ads">Ads</a><a href="/admin/settings">Ad settings</a>
           <form method="post" action="/admin/logout" class="inline"><button class="link">Log out</button></form>
         </nav>`.s;
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc(title)} · Bolt Sort admin</title><meta name="robots" content="noindex">
+<title>${esc(title)} · Nutwise admin</title><meta name="robots" content="noindex">
 <style>
 :root{--bg:#f5f6f8;--card:#fff;--ink:#1d2b3a;--dim:#5d6d7e;--line:#dde3ea;--accent:#3d8bf2;--ok:#2fae63;--bad:#e8554e}
 @media (prefers-color-scheme:dark){:root{--bg:#10171f;--card:#1a2430;--ink:#e8eef5;--dim:#9fb0c2;--line:#2b3846}}

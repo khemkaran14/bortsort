@@ -6,7 +6,7 @@ import { NUT_COLORS, UI, shade } from '../theme';
 import { WIT_LEVELS } from '../wit/levels';
 import { background, button, coinChip, text } from '../ui';
 
-/** First screen: pick Bolt Sort or Wit Twist. Coins are shared between both games. */
+/** First screen: pick Nutwise or Wit Twist. Coins are shared between both games. */
 export class GameSelectScene extends Phaser.Scene {
   constructor() {
     super('GameSelect');

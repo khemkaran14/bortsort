@@ -14,7 +14,7 @@ export class BootScene extends Phaser.Scene {
 
   create() {
     const { width, height } = view(this);
-    text(this, width / 2, height / 2, 'Bolt Sort', 56, '#f3d28a');
+    text(this, width / 2, height / 2, 'Nutwise', 56, '#f3d28a');
     void this.start();
   }
 

@@ -37,9 +37,9 @@ factory.text = function (this: unknown, ...a: unknown[]) {
 /** Wait (briefly) for the game font, so text is measured with the right letters. */
 async function loadFonts() {
   const wait = Promise.all([
-    document.fonts.load('700 32px "Baloo 2"', 'Bolt Sort'),
-    document.fonts.load('800 32px "Baloo 2"', 'Bolt Sort'),
-    document.fonts.load('500 32px "Baloo 2"', 'Bolt Sort'),
+    document.fonts.load('700 32px "Baloo 2"', 'Nutwise'),
+    document.fonts.load('800 32px "Baloo 2"', 'Nutwise'),
+    document.fonts.load('500 32px "Baloo 2"', 'Nutwise'),
     document.fonts.load('700 32px "Baloo 2"', 'बोल्ट सॉर्ट'),
   ]);
   await Promise.race([wait, new Promise((r) => setTimeout(r, 2500))]).catch(() => {});

@@ -3,7 +3,7 @@
  * link for account deletion, as well as the in-app button). It uses the same one-time code login.
  */
 export const DELETE_PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>Delete your Bolt Sort account</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Delete your Nutwise account</title>
 <style>
 :root{--bg:#f5f6f8;--card:#fff;--ink:#1d2b3a;--dim:#5d6d7e;--line:#dde3ea}
 @media (prefers-color-scheme:dark){:root{--bg:#10171f;--card:#1a2430;--ink:#e8eef5;--dim:#9fb0c2;--line:#2b3846}}
@@ -14,7 +14,7 @@ button{font:inherit;padding:10px 16px;border:0;border-radius:8px;background:#e85
 .dim{color:var(--dim)}label{display:block;margin:12px 0 4px}#msg{margin-top:12px;font-weight:600}
 </style></head><body><main>
 <h1>Delete your account</h1>
-<p class="dim">This deletes your Bolt Sort / Wit Twist account, its subscription and the progress saved on our server.
+<p class="dim">This deletes your Nutwise / Wit Twist account, its subscription and the progress saved on our server.
 Progress stored only on your phone stays there until you remove the app.</p>
 <div class="card">
 <label for="ch">I log in with</label><select id="ch"><option value="phone">Phone number</option><option value="email">Email</option></select>

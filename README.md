@@ -38,7 +38,7 @@ install on an Android phone to test.
 
 For store releases: in Android Studio use _Build → Generate Signed App Bundle_ (.aab) with your own
 keystore (never commit it). For iOS, archive in Xcode and upload to App Store Connect / TestFlight.
-App id: `com.divyrs.boltsort` (change it in `apps/mobile/capacitor.config.json` **before** the
+App id: `com.divyrs.nutwise` (change it in `apps/mobile/capacitor.config.json` **before** the
 first store upload, because it can't be changed afterwards).
 
 ## Levels

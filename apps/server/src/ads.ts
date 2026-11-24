@@ -21,7 +21,7 @@ export interface AdSettings {
   enabled: boolean;
   /** Show a full-screen ad after every N wins (0 = never). */
   interstitialEvery: number;
-  /** No full-screen ads before this Bolt Sort level / Wit Twist puzzle. */
+  /** No full-screen ads before this Nutwise level / Wit Twist puzzle. */
   firstAfterLevel: number;
   /** Used when an ad has no own close-button delay. */
   defaultSkipAfter: number;

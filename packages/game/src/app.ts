@@ -23,6 +23,16 @@ interface StageIndex {
   modes?: { blueprint?: string };
 }
 
+/**
+ * Server address. Release builds only accept https (a leftover http://localhost from testing would
+ * otherwise ship to players), so a release built without a live server is simply offline.
+ */
+function apiUrl(): string {
+  const url = (import.meta.env.VITE_API_URL ?? '').trim().replace(/\/$/, '');
+  if (import.meta.env.PROD && !url.startsWith('https://')) return '';
+  return url;
+}
+
 /** Shared services and data for every scene. */
 class AppContext {
   save = new SaveService();
@@ -34,7 +44,7 @@ class AppContext {
   remote = new RemoteConfigService();
   notifications = new NotificationService();
   /** Server for login, subscriptions and ads. Set VITE_API_URL at build time; empty = offline only. */
-  api = new ApiClient((import.meta.env.VITE_API_URL ?? '').replace(/\/$/, ''));
+  api = new ApiClient(apiUrl());
   account = new AccountService(this.api);
   houseAds = new HouseAds(this.api, () => this.account.adFree);
   index: StageIndex = { version: 1, stages: [] };

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import express from 'express';
 import type { Config } from './config';
 import type { DB } from './db';
@@ -34,6 +35,14 @@ export function createApp(
 
   app.get('/health', (_req, res) => res.json({ ok: true }));
   app.get('/delete-account', (_req, res) => res.type('html').send(DELETE_PAGE));
+  // Privacy policy (the same page as docs/store/privacy-policy.html).
+  app.get('/privacy', (_req, res) => {
+    try {
+      res.type('html').send(readFileSync(new URL('../../../docs/store/privacy-policy.html', import.meta.url), 'utf8'));
+    } catch {
+      res.status(404).send('Privacy policy not found');
+    }
+  });
   app.use('/api', apiRouter(db, cfg, sender, verifyGoogle));
   app.get('/r/:id', clickRedirect(db));
   app.use(
